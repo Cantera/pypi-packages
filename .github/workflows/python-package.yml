@@ -1,9 +1,6 @@
 name: Build Python Package
 
-on:
-  push:
-    branches:
-      - add-pypi-package
+on: workflow_dispatch
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -24,6 +21,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout the repository
         with:
+          repository: "Cantera/cantera"
           submodules: recursive
       - name: Set Up Python 3.8
         uses: actions/setup-python@v2
