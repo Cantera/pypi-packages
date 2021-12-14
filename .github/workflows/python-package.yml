@@ -8,10 +8,10 @@ on:
         description: "The ref to be built. Can be a tag, commit hash, or branch name"
         required: true
         default: "main"
-      incoming_ref_type:
-        description: "The type of the incoming ref. One of 'tag', 'commit', or 'branch'."
-        required: true
-        default: "branch"
+      upload:
+        description: "Attempt to upload to PyPI even if this isn't a tagged ref"
+        required: false
+        default: false
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -29,7 +29,7 @@ jobs:
       - name: Echo the incoming_ref
         run: |
           echo "${{ github.events.inputs.incoming_ref }}"
-          echo "${{ github.events.inputs.incoming_ref_type }}"
+          echo "${{ github.events.inputs.upload }}"
 
   # sdist:
   #   name: Build the sdist
