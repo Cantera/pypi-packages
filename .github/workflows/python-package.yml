@@ -3,6 +3,15 @@ name: Build Python Package
 on:
   workflow_dispatch:
   repository_dispatch:
+    inputs:
+      incoming_ref:
+        description: "The ref to be built. Can be a tag, commit hash, or branch name"
+        required: true
+        default: "main"
+      incoming_ref_type:
+        description: "The type of the incoming ref. One of 'tag', 'commit', or 'branch'."
+        required: true
+        default: "branch"
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -17,6 +26,10 @@ jobs:
     steps:
       - name: Dump Event Payload
         run: jq . "$GITHUB_EVENT_PATH"
+      - name: Echo the incoming_ref
+        run: |
+          echo "${{ github.events.inputs.incoming_ref }}"
+          echo "${{ github.events.inputs.incoming_ref_type }}"
 
   # sdist:
   #   name: Build the sdist
