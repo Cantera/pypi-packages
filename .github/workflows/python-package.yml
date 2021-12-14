@@ -1,6 +1,8 @@
 name: Build Python Package
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  repository_dispatch:
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -10,6 +12,12 @@ env:
   CIBW_TEST_REQUIRES: pytest
 
 jobs:
+  dump:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Dump Event Payload
+        run: jq . "$GITHUB_EVENT_PATH"
+
   sdist:
     name: Build the sdist
     runs-on: ubuntu-20.04
