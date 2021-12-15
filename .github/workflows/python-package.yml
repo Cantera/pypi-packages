@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       incoming_ref:
-        description: "The ref to be built. Can be a tag, commit hash, or branch name"
+        description: >
+          The ref from Cantera/cantera to be built. Can be a tag, commit hash,
+          or branch name.
         required: true
         default: "main"
       upload:
-        description: "Attempt to upload to PyPI even if this isn't a tagged ref"
+        description: Attempt to upload to PyPI
         required: true
         default: false
   repository_dispatch:
@@ -38,8 +40,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install libboost-dev
+          sudo apt-get update
+          sudo apt-get install libboost-dev
       - uses: actions/checkout@v2
         name: Checkout the repository
         with:
@@ -54,7 +56,7 @@ jobs:
         run: python3 -m pip install -U pip setuptools
       - name: Install dependencies
         run: python3 -m pip install scons build
-      - name: Build the interface
+      - name: Build the sdist
         run: python3 `which scons` sdist f90_interface=n python_package='none'
       - name: Archive the built sdist
         uses: actions/upload-artifact@v2
@@ -91,7 +93,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_INCLUDE: include
-      BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+      BOOST_URL: https://downloads.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v2
@@ -147,7 +149,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-      BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+      BOOST_URL: https://downloads.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v2
