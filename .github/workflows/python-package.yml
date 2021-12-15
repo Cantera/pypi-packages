@@ -31,254 +31,254 @@ jobs:
           echo "${{ github.event.inputs.incoming_ref }}"
           echo "${{ github.event.inputs.upload }}"
 
-  # sdist:
-  #   name: Build the sdist
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Install dependencies
-  #       run: |
-  #         sudo apt update
-  #         sudo apt install libboost-dev
-  #     - uses: actions/checkout@v2
-  #       name: Checkout the repository
-  #       with:
-  #         repository: "Cantera/cantera"
-  #         submodules: recursive
-  #     - name: Set Up Python 3.8
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: "3.8"
-  #     - name: Update pip
-  #       run: python3 -m pip install -U pip setuptools
-  #     - name: Install dependencies
-  #       run: python3 -m pip install scons build
-  #     - name: Build the interface
-  #       run: python3 `which scons` sdist f90_interface=n python_package='none'
-  #     - name: Archive the built sdist
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: ./build/python_sdist/dist/*.tar.gz
-  #         name: sdist
-  #         if-no-files-found: error
+  sdist:
+    name: Build the sdist
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install libboost-dev
+      - uses: actions/checkout@v2
+        name: Checkout the repository
+        with:
+          repository: "Cantera/cantera"
+          submodules: recursive
+      - name: Set Up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Update pip
+        run: python3 -m pip install -U pip setuptools
+      - name: Install dependencies
+        run: python3 -m pip install scons build
+      - name: Build the interface
+        run: python3 `which scons` sdist f90_interface=n python_package='none'
+      - name: Archive the built sdist
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/python_sdist/dist/*.tar.gz
+          name: sdist
+          if-no-files-found: error
 
-  # linux-wheel:
-  #   name: Build ${{ matrix.libc}}linux_${{ matrix.arch }} for py${{ matrix.py }}
-  #   runs-on: ubuntu-20.04
-  #   needs: ["sdist"]
-  #   strategy:
-  #     matrix:
-  #       py: ["36", "37", "38", "39", "310"]
-  #       arch: ["x86_64", "i686"]
-  #       libc: ["many", "musl"]
-  #       include:
-  #         - py: "310"
-  #           arch: "aarch64"
-  #           libc: "many"
-  #         - py: "310"
-  #           arch: "ppc64le"
-  #           libc: "many"
-  #         - py: "310"
-  #           arch: "s390x"
-  #           libc: "many"
-  #         - py: "39"
-  #           arch: "aarch64"
-  #           libc: "many"
-  #         - py: "38"
-  #           arch: "aarch64"
-  #           libc: "many"
-  #     fail-fast: true
-  #   env:
-  #     BOOST_INCLUDE: include
-  #     BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
-  #   steps:
-  #     - name: Download pre-built sdist
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: sdist
-  #     - name: Extract the sdist tarball
-  #       run: tar -xvf *.tar.gz --strip-components=1
-  #     - name: Restore Boost cache
-  #       uses: actions/cache@v2
-  #       id: cache-boost
-  #       with:
-  #         path: ${{ env.BOOST_INCLUDE }}/boost
-  #         key: boost-${{env.BOOST_URL}}
-  #     - name: Install Boost Headers
-  #       if: steps.cache-boost.outputs.cache-hit != 'true'
-  #       run: |
-  #         mkdir -p $BOOST_INCLUDE
-  #         curl --progress-bar --location --output $BOOST_INCLUDE/download.7z $BOOST_URL
-  #         7z -o$BOOST_INCLUDE x $BOOST_INCLUDE/download.7z -y -bd boost_1_75_0/boost
-  #         mv $BOOST_INCLUDE/boost_1_75_0/boost $BOOST_INCLUDE/boost
-  #         rm $BOOST_INCLUDE/download.7z
-  #         rm -r $BOOST_INCLUDE/boost_1_75_0
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v1
-  #       with:
-  #         platforms: all
-  #     - name: Build wheels
-  #       uses: pypa/cibuildwheel@v2.2.2
-  #       env:
-  #         CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
-  #         CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc}}linux*
-  #         CIBW_ARCHS: ${{ matrix.arch }}
-  #         # h5py is not available as a wheel for these architectures/libc.
-  #         # Building from h5py source takes _forever_ since NumPy is also
-  #         # generally not available. This just skips the tests on these
-  #         # combinations, the wheels are still built and uploaded.
-  #         CIBW_TEST_SKIP: "*-manylinux_{i686,aarch64,ppc64le,s390x} *musl*"
+  linux-wheel:
+    name: Build ${{ matrix.libc}}linux_${{ matrix.arch }} for py${{ matrix.py }}
+    runs-on: ubuntu-20.04
+    needs: ["sdist"]
+    strategy:
+      matrix:
+        py: ["36", "37", "38", "39", "310"]
+        arch: ["x86_64", "i686"]
+        libc: ["many", "musl"]
+        include:
+          - py: "310"
+            arch: "aarch64"
+            libc: "many"
+          - py: "310"
+            arch: "ppc64le"
+            libc: "many"
+          - py: "310"
+            arch: "s390x"
+            libc: "many"
+          - py: "39"
+            arch: "aarch64"
+            libc: "many"
+          - py: "38"
+            arch: "aarch64"
+            libc: "many"
+      fail-fast: true
+    env:
+      BOOST_INCLUDE: include
+      BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+    steps:
+      - name: Download pre-built sdist
+        uses: actions/download-artifact@v2
+        with:
+          name: sdist
+      - name: Extract the sdist tarball
+        run: tar -xvf *.tar.gz --strip-components=1
+      - name: Restore Boost cache
+        uses: actions/cache@v2
+        id: cache-boost
+        with:
+          path: ${{ env.BOOST_INCLUDE }}/boost
+          key: boost-${{env.BOOST_URL}}
+      - name: Install Boost Headers
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p $BOOST_INCLUDE
+          curl --progress-bar --location --output $BOOST_INCLUDE/download.7z $BOOST_URL
+          7z -o$BOOST_INCLUDE x $BOOST_INCLUDE/download.7z -y -bd boost_1_75_0/boost
+          mv $BOOST_INCLUDE/boost_1_75_0/boost $BOOST_INCLUDE/boost
+          rm $BOOST_INCLUDE/download.7z
+          rm -r $BOOST_INCLUDE/boost_1_75_0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
+          CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc}}linux*
+          CIBW_ARCHS: ${{ matrix.arch }}
+          # h5py is not available as a wheel for these architectures/libc.
+          # Building from h5py source takes _forever_ since NumPy is also
+          # generally not available. This just skips the tests on these
+          # combinations, the wheels are still built and uploaded.
+          CIBW_TEST_SKIP: "*-manylinux_{i686,aarch64,ppc64le,s390x} *musl*"
 
-  #     - name: Archive the built wheels
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: ./wheelhouse/*.whl
-  #         name: wheels
+      - name: Archive the built wheels
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          name: wheels
 
-  # windows-wheel:
-  #   name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
-  #   runs-on: windows-2019
-  #   needs: ["sdist"]
-  #   strategy:
-  #     matrix:
-  #       py: ["36", "37", "38", "39", "310"]
-  #       arch: ["AMD64", "x86"]
-  #     fail-fast: true
-  #   env:
-  #     BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-  #     BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
-  #   steps:
-  #     - name: Download pre-built sdist
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: sdist
-  #     - name: Extract the sdist tarball
-  #       run: tar -xvf *.tar.gz --strip-components=1
-  #       shell: bash
-  #     - name: Restore Boost cache
-  #       uses: actions/cache@v2
-  #       id: cache-boost
-  #       with:
-  #         path: ${{env.BOOST_ROOT}}
-  #         key: boost-${{env.BOOST_URL}}
-  #     - name: Install Boost Headers
-  #       if: steps.cache-boost.outputs.cache-hit != 'true'
-  #       run: |
-  #         BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
-  #         mkdir -p $BOOST_ROOT
-  #         curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
-  #         7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_75_0/boost
-  #         mv $BOOST_ROOT/boost_1_75_0/boost $BOOST_ROOT/boost
-  #         rm $BOOST_ROOT/download.7z
-  #       shell: bash
-  #     - name: Build wheels
-  #       uses: pypa/cibuildwheel@v2.2.2
-  #       env:
-  #         CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
-  #         CIBW_ARCHS: ${{ matrix.arch }}
-  #         CIBW_BUILD: cp${{ matrix.py }}-*
-  #         CIBW_BUILD_FRONTEND: pip
-  #         # h5py is not available as a wheel for win32
-  #         CIBW_TEST_SKIP: "*-win32"
-  #     - name: Archive the built wheels
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: ./wheelhouse/*.whl
-  #         name: wheels
+  windows-wheel:
+    name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
+    runs-on: windows-2019
+    needs: ["sdist"]
+    strategy:
+      matrix:
+        py: ["36", "37", "38", "39", "310"]
+        arch: ["AMD64", "x86"]
+      fail-fast: true
+    env:
+      BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
+      BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+    steps:
+      - name: Download pre-built sdist
+        uses: actions/download-artifact@v2
+        with:
+          name: sdist
+      - name: Extract the sdist tarball
+        run: tar -xvf *.tar.gz --strip-components=1
+        shell: bash
+      - name: Restore Boost cache
+        uses: actions/cache@v2
+        id: cache-boost
+        with:
+          path: ${{env.BOOST_ROOT}}
+          key: boost-${{env.BOOST_URL}}
+      - name: Install Boost Headers
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
+          mkdir -p $BOOST_ROOT
+          curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_75_0/boost
+          mv $BOOST_ROOT/boost_1_75_0/boost $BOOST_ROOT/boost
+          rm $BOOST_ROOT/download.7z
+        shell: bash
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BUILD: cp${{ matrix.py }}-*
+          CIBW_BUILD_FRONTEND: pip
+          # h5py is not available as a wheel for win32
+          CIBW_TEST_SKIP: "*-win32"
+      - name: Archive the built wheels
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          name: wheels
 
-  # macos-intel-wheel:
-  #   name: Build Intel macOS Wheels for py${{ matrix.py }}
-  #   runs-on: macos-10.15
-  #   needs: ["sdist"]
-  #   env:
-  #     MACOSX_DEPLOYMENT_TARGET: 10.9
-  #   strategy:
-  #     matrix:
-  #       py: ["36", "37", "38", "39", "310"]
-  #     fail-fast: true
-  #   steps:
-  #     - name: Download pre-built sdist
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: sdist
-  #     - name: Extract the sdist tarball
-  #       run: tar -xvf *.tar.gz --strip-components=1
-  #     - name: Install Brew dependencies
-  #       run: brew install boost
-  #     - name: Build wheels
-  #       uses: pypa/cibuildwheel@v2.2.2
-  #       env:
-  #         CIBW_BUILD: cp${{ matrix.py }}-*
-  #         CIBW_ARCHS: "x86_64"
+  macos-intel-wheel:
+    name: Build Intel macOS Wheels for py${{ matrix.py }}
+    runs-on: macos-10.15
+    needs: ["sdist"]
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+    strategy:
+      matrix:
+        py: ["36", "37", "38", "39", "310"]
+      fail-fast: true
+    steps:
+      - name: Download pre-built sdist
+        uses: actions/download-artifact@v2
+        with:
+          name: sdist
+      - name: Extract the sdist tarball
+        run: tar -xvf *.tar.gz --strip-components=1
+      - name: Install Brew dependencies
+        run: brew install boost
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_BUILD: cp${{ matrix.py }}-*
+          CIBW_ARCHS: "x86_64"
 
-  #     - name: Archive the built wheels
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: ./wheelhouse/*.whl
-  #         name: wheels
+      - name: Archive the built wheels
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          name: wheels
 
-  # macos-arm-wheel:
-  #   name: Build arm64 macOS Wheels for py${{ matrix.py }}
-  #   runs-on: macos-10.15
-  #   needs: ["sdist"]
-  #   strategy:
-  #     matrix:
-  #       py: ["38", "39", "310"]
-  #     fail-fast: true
-  #   env:
-  #     SDKROOT: "macosx11.0"
-  #     _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
-  #     ARCHFLAGS: "-arch arm64"
-  #     MACOSX_DEPLOYMENT_TARGET: "10.9"
-  #     DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
-  #   steps:
-  #     - name: Download pre-built sdist
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: sdist
-  #     - name: Extract the sdist tarball
-  #       run: tar -xvf *.tar.gz --strip-components=1
-  #     - name: Install Brew dependencies
-  #       run: brew install boost
-  #     - name: Build wheels
-  #       uses: pypa/cibuildwheel@v2.2.2
-  #       env:
-  #         CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
-  #         CIBW_ARCHS: "arm64"
-  #         CIBW_BUILD: cp${{ matrix.py }}-*
-  #         # Testing won't be available for macOS ARM until native ARM
-  #         # runners are available.
-  #         CIBW_TEST_SKIP: "*-macosx_arm64"
-  #     - name: Archive the built wheels
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         path: ./wheelhouse/*.whl
-  #         name: wheels
+  macos-arm-wheel:
+    name: Build arm64 macOS Wheels for py${{ matrix.py }}
+    runs-on: macos-10.15
+    needs: ["sdist"]
+    strategy:
+      matrix:
+        py: ["38", "39", "310"]
+      fail-fast: true
+    env:
+      SDKROOT: "macosx11.0"
+      _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+      ARCHFLAGS: "-arch arm64"
+      MACOSX_DEPLOYMENT_TARGET: "10.9"
+      DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
+    steps:
+      - name: Download pre-built sdist
+        uses: actions/download-artifact@v2
+        with:
+          name: sdist
+      - name: Extract the sdist tarball
+        run: tar -xvf *.tar.gz --strip-components=1
+      - name: Install Brew dependencies
+        run: brew install boost
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
+          CIBW_ARCHS: "arm64"
+          CIBW_BUILD: cp${{ matrix.py }}-*
+          # Testing won't be available for macOS ARM until native ARM
+          # runners are available.
+          CIBW_TEST_SKIP: "*-macosx_arm64"
+      - name: Archive the built wheels
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          name: wheels
 
-  # publish-files-to-pypi:
-  #   name: Publish distribution files to PyPI
-  #   runs-on: ubuntu-20.04
-  #   needs:
-  #     - "sdist"
-  #     - "linux-wheel"
-  #     - "windows-wheel"
-  #     - "macos-intel-wheel"
-  #     - "macos-arm-wheel"
-  #   steps:
-  #     - name: Download pre-built wheels
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         path: dist/
-  #         name: wheels
-  #     - name: Download pre-build sdist
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         path: dist/
-  #         name: sdist
-  #     - name: pypi-publish
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         user: __token__
-  #         password: ${{ secrets.TEST_PYPI_TOKEN }}
-  #         repository_url: https://test.pypi.org/legacy/
-  #         # Ignore existing packages as long as we're uploading to TestPyPI
-  #         skip_existing: true
+  publish-files-to-pypi:
+    name: Publish distribution files to PyPI
+    runs-on: ubuntu-20.04
+    needs:
+      - "sdist"
+      - "linux-wheel"
+      - "windows-wheel"
+      - "macos-intel-wheel"
+      - "macos-arm-wheel"
+    steps:
+      - name: Download pre-built wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: dist/
+          name: wheels
+      - name: Download pre-build sdist
+        uses: actions/download-artifact@v2
+        with:
+          path: dist/
+          name: sdist
+      - name: pypi-publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          # Ignore existing packages as long as we're uploading to TestPyPI
+          skip_existing: true
