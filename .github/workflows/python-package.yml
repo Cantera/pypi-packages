@@ -28,8 +28,8 @@ jobs:
         run: jq . "$GITHUB_EVENT_PATH"
       - name: Echo the incoming_ref
         run: |
-          echo "${{ github.events.inputs.incoming_ref }}"
-          echo "${{ github.events.inputs.upload }}"
+          echo "${{ github.event.inputs.incoming_ref }}"
+          echo "${{ github.event.inputs.upload }}"
 
   # sdist:
   #   name: Build the sdist
