@@ -2,7 +2,6 @@ name: Build Python Package
 
 on:
   workflow_dispatch:
-  repository_dispatch:
     inputs:
       incoming_ref:
         description: "The ref to be built. Can be a tag, commit hash, or branch name"
@@ -13,6 +12,7 @@ on:
         required: false
         default: false
 
+  repository_dispatch:
 env:
   CIBW_BUILD_FRONTEND: build
   CIBW_BUILD_VERBOSITY: 3
