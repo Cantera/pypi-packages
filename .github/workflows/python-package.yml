@@ -13,7 +13,6 @@ on:
         description: Attempt to upload to PyPI
         required: true
         default: false
-  repository_dispatch:
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -194,7 +193,7 @@ jobs:
     runs-on: macos-10.15
     needs: ["sdist"]
     env:
-      MACOSX_DEPLOYMENT_TARGET: 10.9
+      MACOSX_DEPLOYMENT_TARGET: "10.9"
     strategy:
       matrix:
         py: ["36", "37", "38", "39", "310"]
@@ -283,7 +282,4 @@ jobs:
         if: github.event.inputs.upload
         with:
           user: __token__
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-          # Ignore existing packages as long as we're uploading to TestPyPI
-          skip_existing: true
+          password: ${{ secrets.PYPI_TOKEN }}
