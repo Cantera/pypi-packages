@@ -279,7 +279,7 @@ jobs:
           name: sdist
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.event.inputs.upload
+        if: github.event.inputs.upload == "true"
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
