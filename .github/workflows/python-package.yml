@@ -12,7 +12,7 @@ on:
       upload:
         description: Attempt to upload to PyPI
         required: true
-        default: false
+        default: "false"
 
 env:
   CIBW_BUILD_FRONTEND: build
@@ -279,7 +279,7 @@ jobs:
           name: sdist
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.event.inputs.upload == "true"
+        if: github.event.inputs.upload == 'true'
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
