@@ -266,6 +266,7 @@ jobs:
       - "windows-wheel"
       - "macos-intel-wheel"
       - "macos-arm-wheel"
+    if: github.event.inputs.upload == 'true'
     steps:
       - name: Download pre-built wheels
         uses: actions/download-artifact@v2
@@ -279,7 +280,6 @@ jobs:
           name: sdist
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.event.inputs.upload == 'true'
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
