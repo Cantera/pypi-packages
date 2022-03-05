@@ -36,6 +36,8 @@ jobs:
   sdist:
     name: Build the sdist
     runs-on: ubuntu-20.04
+    outputs:
+      job-status: ${{ job.status }}
     steps:
       - name: Install dependencies
         run: |
@@ -68,6 +70,8 @@ jobs:
     name: Build ${{ matrix.libc}}linux_${{ matrix.arch }} for py${{ matrix.py }}
     runs-on: ubuntu-20.04
     needs: ["sdist"]
+    outputs:
+      job-status: ${{ job.status }}
     strategy:
       matrix:
         py: ["37", "38", "39", "310"]
@@ -141,6 +145,8 @@ jobs:
     name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
     runs-on: windows-2019
     needs: ["sdist"]
+    outputs:
+      job-status: ${{ job.status }}
     strategy:
       matrix:
         py: ["37", "38", "39", "310"]
@@ -192,6 +198,8 @@ jobs:
     name: Build Intel macOS Wheels for py${{ matrix.py }}
     runs-on: macos-10.15
     needs: ["sdist"]
+    outputs:
+      job-status: ${{ job.status }}
     env:
       MACOSX_DEPLOYMENT_TARGET: "10.9"
     strategy:
@@ -223,6 +231,8 @@ jobs:
     name: Build arm64 macOS Wheels for py${{ matrix.py }}
     runs-on: macos-10.15
     needs: ["sdist"]
+    outputs:
+      job-status: ${{ job.status }}
     strategy:
       matrix:
         py: ["38", "39", "310"]
@@ -260,6 +270,8 @@ jobs:
   publish-files-to-pypi:
     name: Publish distribution files to PyPI
     runs-on: ubuntu-20.04
+    outputs:
+      job-status: ${{ job.status }}
     needs:
       - "sdist"
       - "linux-wheel"
@@ -283,3 +295,24 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+
+  send_status_to_cantera:
+    name: Send jobs status to Cantera/cantera
+    runs-on: ubuntu-20.04
+    needs:
+      - "publish-files-to-pypi"
+      - "sdist"
+      - "linux-wheel"
+      - "windows-wheel"
+      - "macos-intel-wheel"
+      - "macos-arm-wheel"
+    if: ${{ always() }}
+    steps:
+      - name: Collect statuses
+        run: |
+          echo sdist ${{needs.sdist.outputs.job-status}}
+          echo linux-wheel ${{needs.linux-wheel.outputs.job-status}}
+          echo windows-wheel ${{needs.windows-wheel.outputs.job-status}}
+          echo macos-intel-wheel ${{needs.macos-intel-wheel.outputs.job-status}}
+          echo macos-arm-wheel ${{needs.macos-arm-wheel.outputs.job-status}}
+          echo publish-files-to-pypi ${{needs.publish-files-to-pypi.outputs.job-status}}
