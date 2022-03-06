@@ -60,6 +60,8 @@ jobs:
   sdist:
     name: Build the sdist
     runs-on: ubuntu-20.04
+    needs:
+      - "post-pending-status"
     outputs:
       job-status: ${{ job.status }}
     steps:
