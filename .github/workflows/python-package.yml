@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Dump Event Payload
         run: jq . "$GITHUB_EVENT_PATH"
-      - name: Echo the incoming_ref
+      - name: Echo the input variables
         run: |
           echo "${{ github.event.inputs.incoming_ref }}"
           echo "${{ github.event.inputs.upload }}"
@@ -40,7 +40,14 @@ jobs:
     steps:
       - name: Post the status to the upstream commit
         run: |
-          gh api repos/cantera/cantera/statuses/${{ github.event.inputs.incoming_ref }} \
+          INCOMING_REF="${{ github.event.inputs.incoming_ref }}"
+          if [[ "$INCOMING_REF" == *"refs/"*]]; then
+            INCOMING_REF=${INCOMING_REF/refs\//}
+          fi
+          REF=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
+                -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
+          echo "REF=${REF}" >> $GITHUB_ENV
+          gh api repos/cantera/cantera/statuses/${REF} \
             -H "Accept: application/vnd.github.v3+json" \
             --field state='pending' \
             --field target_url=$ACTION_URL \
@@ -363,7 +370,7 @@ jobs:
         shell: python
       - name: Post the status to the upstream commit
         run: |
-          gh api repos/cantera/cantera/statuses/${{ github.event.inputs.incoming_ref }} \
+          gh api repos/cantera/cantera/statuses/${REF} \
             -H "Accept: application/vnd.github.v3+json" \
             --field state=$OVERALL_STATUS \
             --field target_url=$ACTION_URL \
