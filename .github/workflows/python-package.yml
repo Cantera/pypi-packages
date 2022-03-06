@@ -14,6 +14,10 @@ on:
         required: true
         default: "false"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CIBW_BUILD_FRONTEND: build
   CIBW_BUILD_VERBOSITY: 3
