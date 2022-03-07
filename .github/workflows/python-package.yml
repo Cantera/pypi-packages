@@ -51,7 +51,6 @@ jobs:
           fi
           INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
                 -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
-          echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
             --field state='pending' \
@@ -59,6 +58,8 @@ jobs:
             --field context='PyPI Package Build' \
             --field description="Pending build" \
             --silent
+          echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
+          echo ${INCOMING_SHA}
         env:
           GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
 
