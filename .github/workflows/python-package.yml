@@ -337,7 +337,7 @@ jobs:
       - "windows-wheel"
       - "macos-intel-wheel"
       - "macos-arm-wheel"
-    if: ${{ always() }}
+    if: always()
     steps:
       - name: Collect statuses
         run: |
@@ -351,7 +351,10 @@ jobs:
               "macos-arm": "${{needs.macos-arm-wheel.outputs.job-status}}",
               "publish": "${{needs.publish-files-to-pypi.outputs.job-status}}",
           }
-          if all(v == "success" for v in statuses.values() if v):
+          # This is a deliberate comparison to the empty string.
+          if statuses["publish"] == "" and "${{ github.event.inputs.upload }}" == "false":
+              del statuses["publish"]
+          if all(v == "success" for v in statuses.values()):
               overall_status = "success"
           elif any(v in ("cancelled", "") for v in statuses.values()):
               overall_status = "error"
