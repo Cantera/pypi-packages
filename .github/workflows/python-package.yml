@@ -60,7 +60,7 @@ jobs:
             --field context='PyPI Package Build' \
             --field description="Pending build" \
             --silent
-          echo "INCOMING_SHA="${INCOMING_SHA}"" >> $GITHUB_ENV
+          echo "INCOMING_SHA=\"${INCOMING_SHA}\"" >> $GITHUB_ENV
           echo ${INCOMING_SHA}
           cat $GITHUB_ENV
 
