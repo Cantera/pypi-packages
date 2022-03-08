@@ -64,6 +64,17 @@ jobs:
           echo ${INCOMING_SHA}
           cat $GITHUB_ENV
 
+  debug:
+    name: Debug
+    runs-on: ubuntu-20.04
+    needs:
+      - "post-pending-status"
+    steps:
+      - name: Debug
+        run: echo SHA ${{ env.INCOMING_SHA }}
+      - name: Debug
+        run: echo SHA $INCOMING_SHA
+
   sdist:
     name: Build the sdist
     runs-on: ubuntu-20.04
