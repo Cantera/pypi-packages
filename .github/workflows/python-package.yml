@@ -341,8 +341,6 @@ jobs:
       - "macos-arm-wheel"
       - "publish-files-to-pypi"
     if: always()
-    env:
-      INCOMING_SHA: ${{ needs.post-pending-status.outputs.incoming-sha }}
     steps:
       - name: Collect statuses
         run: |
@@ -386,6 +384,7 @@ jobs:
         shell: python
       - name: Post the status to the upstream commit
         run: |
+          INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
             --field state=$OVERALL_STATUS \
