@@ -81,7 +81,7 @@ jobs:
           echo "::set-output name=incoming-sha::${INCOMING_SHA}"
       - name: Post the status to the upstream commit
         id: set-the-status
-        if: ${{ env.TAG_REF }} == 'false'
+        if: env.TAG_REF == 'false'
         run: |
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
