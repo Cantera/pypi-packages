@@ -63,7 +63,7 @@ jobs:
               INCOMING_REF = f"heads/{INCOMING_REF}"
 
           TAG_REF = "false"
-          if INCOMING_REF.startswith("TAG_REF"):
+          if INCOMING_REF.startswith("tags"):
               TAG_REF = "true"
 
           Path(os.environ["GITHUB_ENV"]).write_text(
@@ -81,7 +81,7 @@ jobs:
           echo "::set-output name=incoming-sha::${INCOMING_SHA}"
       - name: Post the status to the upstream commit
         id: set-the-status
-        if: ${{ env.TAG_REF }} == 'true'
+        if: ${{ env.TAG_REF }} == 'false'
         run: |
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
