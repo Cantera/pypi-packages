@@ -15,7 +15,7 @@ on:
         default: "false"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.ref }}-${{ github.event.inputs.incoming_ref}}
   cancel-in-progress: true
 
 env:
