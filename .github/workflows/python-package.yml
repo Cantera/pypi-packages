@@ -410,7 +410,7 @@ jobs:
               gh_env.write(f"OVERALL_STATUS={overall_status}\nDESCRIPTION={description}")
         shell: python
       - name: Post the status to the upstream commit
-        if: ${{ needs.post-pending-status.outputs.tag-ref }} == 'true'
+        if: needs.post-pending-status.outputs.tag-ref == 'false'
         run: |
           INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
