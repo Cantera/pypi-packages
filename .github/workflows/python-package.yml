@@ -55,10 +55,13 @@ jobs:
           from pathlib import Path
 
           INCOMING_REF = "${{ github.event.inputs.incoming_ref }}"
+          INCOMING_SHA = ""
           if INCOMING_REF.startswith("refs/"):
               INCOMING_REF = INCOMING_REF.replace("refs/", "")
           elif re.match(r"^v\d\.\d\.\d.*$", INCOMING_REF) is not None:
               INCOMING_REF = f"tags/{INCOMING_REF}"
+          elif re.match(r"^[a-f0-9]{6,40}", INCOMING_REF) is not None:
+              INCOMING_SHA = INCOMING_REF
           else:
               INCOMING_REF = f"heads/{INCOMING_REF}"
 
@@ -68,15 +71,18 @@ jobs:
 
           Path(os.environ["GITHUB_ENV"]).write_text(
               f"INCOMING_REF={INCOMING_REF}\n"
-              f"TAG_REF={TAG_REF}"
+              f"TAG_REF={TAG_REF}\n"
+              f"INCOMING_SHA={INCOMING_SHA}"
           )
           print(f"::set-output name=tag-ref::{TAG_REF}")
         shell: python
       - name: Get the SHA associated with the incoming ref
         id: get-incoming-sha
         run: |
-          INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
-            -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
+          if [[ "${INCOMING_SHA}" == "" ]]; then
+            INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
+              -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
+          fi
           echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           echo "::set-output name=incoming-sha::${INCOMING_SHA}"
       - name: Post the status to the upstream commit
