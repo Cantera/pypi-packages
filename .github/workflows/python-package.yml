@@ -82,8 +82,9 @@ jobs:
           if [[ "${INCOMING_SHA}" == "" ]]; then
             INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
               -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
+            echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           fi
-          echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
+          # This needs to be in this step to be output to other jobs.
           echo "::set-output name=incoming-sha::${INCOMING_SHA}"
       - name: Post the status to the upstream commit
         id: set-the-status
@@ -162,7 +163,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_INCLUDE: include
-      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.z
+      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v2
@@ -220,7 +221,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-      BOOST_URL: https://downloads.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v2
@@ -241,8 +242,8 @@ jobs:
           BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
           mkdir -p $BOOST_ROOT
           curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_75_0/boost
-          mv $BOOST_ROOT/boost_1_75_0/boost $BOOST_ROOT/boost
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_78_0/boost
+          mv $BOOST_ROOT/boost_1_78_0/boost $BOOST_ROOT/boost
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
