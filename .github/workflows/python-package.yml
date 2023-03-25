@@ -187,7 +187,7 @@ jobs:
           rm $BOOST_INCLUDE/download.7z
           rm -r $BOOST_INCLUDE/boost_1_78_0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: all
       - name: Build wheels
