@@ -74,7 +74,9 @@ jobs:
               f"TAG_REF={TAG_REF}\n"
               f"INCOMING_SHA={INCOMING_SHA}"
           )
-          print(f"::set-output name=tag-ref::{TAG_REF}")
+          Path(os.environ["GITHUB_OUTPUT"]).write_text(
+              f"tag-ref={TAG_REF}"
+          )
         shell: python
       - name: Get the SHA associated with the incoming ref
         id: get-incoming-sha
@@ -85,7 +87,7 @@ jobs:
             echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           fi
           # This needs to be in this step to be output to other jobs.
-          echo "::set-output name=incoming-sha::${INCOMING_SHA}"
+          echo "incoming-sha=${INCOMING_SHA}" >> $GITHUB_OUTPUT
       - name: Post the status to the upstream commit
         id: set-the-status
         if: env.TAG_REF == 'false'
@@ -120,10 +122,8 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.10"
-      - name: Update pip
-        run: python3 -m pip install -U pip setuptools
       - name: Install dependencies
-        run: python3 -m pip install scons build
+        run: python3 -m pip install -U pip scons build
       - name: Build the sdist
         run: python3 `which scons` sdist f90_interface=n python_package='none'
       - name: Archive the built sdist
