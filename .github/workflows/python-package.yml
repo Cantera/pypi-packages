@@ -22,7 +22,7 @@ env:
   CIBW_BUILD_FRONTEND: build
   CIBW_BUILD_VERBOSITY: 3
   CIBW_TEST_COMMAND: python -m pytest --pyargs cantera.test
-  CIBW_TEST_EXTRAS: hdf5,pandas
+  CIBW_TEST_EXTRAS: pandas
   CIBW_TEST_REQUIRES: pytest
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
