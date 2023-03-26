@@ -21,7 +21,10 @@ concurrency:
 env:
   CIBW_BUILD_FRONTEND: build
   CIBW_BUILD_VERBOSITY: 3
-  CIBW_TEST_COMMAND: python -m pytest --pyargs cantera.test
+  CIBW_BEFORE_TEST: >
+    curl -sL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz \
+    && tar -xzf cantera.tar.gz "cantera-${INCOMING_SHA}/test/python"
+  CIBW_TEST_COMMAND: pytest "cantera-${INCOMING_SHA}/test/python"
   CIBW_TEST_EXTRAS: pandas
   CIBW_TEST_REQUIRES: pytest
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
@@ -29,7 +32,7 @@ env:
 jobs:
   dump:
     name: Dump the input parameters for the workflow
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Dump Event Payload
         run: jq . "$GITHUB_EVENT_PATH"
@@ -40,7 +43,7 @@ jobs:
 
   post-pending-status:
     name: Post a pending workflow status to Cantera/cantera
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
     outputs:
@@ -102,7 +105,7 @@ jobs:
 
   sdist:
     name: Build the sdist
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - "post-pending-status"
     outputs:
@@ -141,10 +144,19 @@ jobs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["37", "38", "39", "310"]
+        py: ["38", "39", "310", "311"]
         arch: ["x86_64", "i686"]
         libc: ["many", "musl"]
         include:
+          - py: "311"
+            arch: "aarch64"
+            libc: "many"
+          - py: "311"
+            arch: "ppc64le"
+            libc: "many"
+          - py: "311"
+            arch: "s390x"
+            libc: "many"
           - py: "310"
             arch: "aarch64"
             libc: "many"
@@ -166,13 +178,13 @@ jobs:
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       - name: Restore Boost cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-boost
         with:
           path: ${{ env.BOOST_INCLUDE }}/boost
@@ -191,7 +203,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
+        uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
@@ -216,7 +228,7 @@ jobs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["37", "38", "39", "310"]
+        py: ["38", "39", "310", "311"]
         arch: ["AMD64", "x86"]
       fail-fast: true
     env:
@@ -224,14 +236,14 @@ jobs:
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
       - name: Restore Boost cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-boost
         with:
           path: ${{env.BOOST_ROOT}}
@@ -247,7 +259,7 @@ jobs:
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
+        uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -263,7 +275,7 @@ jobs:
 
   macos-intel-wheel:
     name: Build Intel macOS Wheels for py${{ matrix.py }}
-    runs-on: macos-10.15
+    runs-on: macos-11
     needs: ["sdist"]
     outputs:
       job-status: ${{ job.status }}
@@ -271,11 +283,11 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: "10.9"
     strategy:
       matrix:
-        py: ["37", "38", "39", "310"]
+        py: ["38", "39", "310", "311"]
       fail-fast: true
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: sdist
       - name: Extract the sdist tarball
@@ -283,7 +295,7 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
+        uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS: "x86_64"
@@ -296,13 +308,13 @@ jobs:
 
   macos-arm-wheel:
     name: Build arm64 macOS Wheels for py${{ matrix.py }}
-    runs-on: macos-10.15
+    runs-on: macos-11
     needs: ["sdist"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["38", "39", "310"]
+        py: ["38", "39", "310", "311"]
       fail-fast: true
     env:
       SDKROOT: "macosx11.0"
@@ -312,7 +324,7 @@ jobs:
       DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: sdist
       - name: Extract the sdist tarball
@@ -320,7 +332,7 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.2.2
+        uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
           CIBW_ARCHS: "arm64"
@@ -336,7 +348,7 @@ jobs:
 
   publish-files-to-pypi:
     name: Publish distribution files to PyPI
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       job-status: ${{ job.status }}
     needs:
@@ -348,12 +360,12 @@ jobs:
     if: github.event.inputs.upload == 'true'
     steps:
       - name: Download pre-built wheels
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: dist/
           name: wheels
       - name: Download pre-build sdist
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: dist/
           name: sdist
@@ -365,7 +377,7 @@ jobs:
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs:
       - "post-pending-status"
       - "sdist"
