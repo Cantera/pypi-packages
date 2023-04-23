@@ -205,7 +205,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} INCOMING_SHA=${{ env.INCOMING_SHA }}"
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           # h5py is not available as a wheel for these architectures/libc.
@@ -261,7 +261,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT} INCOMING_SHA=${{ env.INCOMING_SHA }}"
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_BUILD_FRONTEND: pip
@@ -334,7 +334,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
+          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include" INCOMING_SHA=${{ env.INCOMING_SHA }}'
           CIBW_ARCHS: "arm64"
           CIBW_BUILD: cp${{ matrix.py }}-*
           # Testing won't be available for macOS ARM until native ARM
