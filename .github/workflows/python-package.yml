@@ -280,7 +280,7 @@ jobs:
     outputs:
       job-status: ${{ job.status }}
     env:
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
+      MACOSX_DEPLOYMENT_TARGET: "10.14"
     strategy:
       matrix:
         py: ["38", "39", "310", "311"]
@@ -320,7 +320,7 @@ jobs:
       SDKROOT: "macosx11.0"
       _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
       ARCHFLAGS: "-arch arm64"
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
+      MACOSX_DEPLOYMENT_TARGET: "10.14"
       DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
     steps:
       - name: Download pre-built sdist
