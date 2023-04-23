@@ -203,7 +203,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
           CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
@@ -259,7 +259,7 @@ jobs:
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
           CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -295,7 +295,7 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS: "x86_64"
@@ -332,7 +332,7 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
           CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
           CIBW_ARCHS: "arm64"
