@@ -122,7 +122,7 @@ jobs:
           submodules: recursive
           ref: ${{ github.event.inputs.incoming_ref }}
       - name: Set Up Python 3.10
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Install dependencies
@@ -135,11 +135,28 @@ jobs:
           path: ./build/python_sdist/dist/*.tar.gz
           name: sdist
           if-no-files-found: error
+      # Copied from https://github.com/hynek/build-and-inspect-python-package/
+      - name: Show SDist contents hierarchically, including metadata.
+        shell: bash
+        working-directory: build/python_sdist/dist
+        run: |
+          mkdir -p out/sdist
+          tar xf *.tar.gz -C out/sdist
+
+          echo -e '\n<details><summary>SDist contents</summary>\n' >> $GITHUB_STEP_SUMMARY
+          (cd /tmp/baipp/dist/out/sdist && tree -Da --timefmt="%Y-%m-%dT%H:%M:%SZ" * | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY)
+          echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
+
+          echo ----- Metadata Follows -----
+          echo -e '\n<details><summary>Metadata</summary>\n' >> $GITHUB_STEP_SUMMARY
+          cat out/sdist/*/PKG-INFO | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY
+          echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
+          echo ----- End of Metadata  -----
 
   linux-wheel:
     name: Build ${{ matrix.libc }}linux_${{ matrix.arch }} for py${{ matrix.py }}
     runs-on: ubuntu-20.04
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -205,7 +222,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} INCOMING_SHA=${{ env.INCOMING_SHA }}"
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}"
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           # h5py is not available as a wheel for these architectures/libc.
@@ -223,7 +240,7 @@ jobs:
   windows-wheel:
     name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
     runs-on: windows-2019
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -261,12 +278,10 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT} INCOMING_SHA=${{ env.INCOMING_SHA }}"
+          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT} INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}"
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_BUILD_FRONTEND: pip
-          # h5py is not available as a wheel for win32
-          CIBW_TEST_SKIP: "*-win32"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
         with:
@@ -276,7 +291,7 @@ jobs:
   macos-intel-wheel:
     name: Build Intel macOS Wheels for py${{ matrix.py }}
     runs-on: macos-11
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     env:
@@ -297,6 +312,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
+          CIBW_ENVIRONMENT: "INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}"
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS: "x86_64"
 
@@ -309,7 +325,7 @@ jobs:
   macos-arm-wheel:
     name: Build arm64 macOS Wheels for py${{ matrix.py }}
     runs-on: macos-11
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -321,7 +337,7 @@ jobs:
       _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
       ARCHFLAGS: "-arch arm64"
       MACOSX_DEPLOYMENT_TARGET: "10.14"
-      DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
+      DEVELOPER_DIR: "/Applications/Xcode_12.4.app/Contents/Developer"
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v3
@@ -334,7 +350,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include" INCOMING_SHA=${{ env.INCOMING_SHA }}'
+          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include" INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}'
           CIBW_ARCHS: "arm64"
           CIBW_BUILD: cp${{ matrix.py }}-*
           # Testing won't be available for macOS ARM until native ARM
