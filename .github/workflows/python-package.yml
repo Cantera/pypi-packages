@@ -138,13 +138,14 @@ jobs:
       # Copied from https://github.com/hynek/build-and-inspect-python-package/
       - name: Show SDist contents hierarchically, including metadata.
         shell: bash
-        working-directory: build/python_sdist/dist
         run: |
-          mkdir -p out/sdist
+          mkdir -p /tmp/out/sdist
+          cp build/python_sdist/dist/*.tar.gz /tmp/
+          cd /tmp
           tar xf *.tar.gz -C out/sdist
 
           echo -e '\n<details><summary>SDist contents</summary>\n' >> $GITHUB_STEP_SUMMARY
-          (cd /tmp/baipp/dist/out/sdist && tree -Da --timefmt="%Y-%m-%dT%H:%M:%SZ" * | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY)
+          (cd /tmp/out/sdist && tree -Da --timefmt="%Y-%m-%dT%H:%M:%SZ" * | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY)
           echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
 
           echo ----- Metadata Follows -----
