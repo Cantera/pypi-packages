@@ -291,8 +291,8 @@ jobs:
           path: ./wheelhouse/*.whl
           name: wheels
 
-  macos-intel-wheel:
-    name: Build Intel macOS Wheels for py${{ matrix.py }}
+  macos-wheel:
+    name: Build macOS Wheels for py${{ matrix.py }}
     runs-on: macos-11
     needs: ["sdist", "post-pending-status"]
     outputs:
@@ -338,8 +338,7 @@ jobs:
       - "sdist"
       - "linux-wheel"
       - "windows-wheel"
-      - "macos-intel-wheel"
-      - "macos-arm-wheel"
+      - "macos-wheel"
     if: github.event.inputs.upload == 'true'
     steps:
       - name: Download pre-built wheels
@@ -366,8 +365,7 @@ jobs:
       - "sdist"
       - "linux-wheel"
       - "windows-wheel"
-      - "macos-intel-wheel"
-      - "macos-arm-wheel"
+      - "macos-wheel"
       - "publish-files-to-pypi"
     if: always()
     steps:
