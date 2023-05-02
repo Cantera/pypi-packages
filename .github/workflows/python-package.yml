@@ -124,7 +124,10 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install -U pip scons build
       - name: Build the sdist
-        run: python3 `which scons` sdist f90_interface=n python_package='none'
+        run: |
+          python3 `which scons` sdist f90_interface=n python_package='none' \
+          system_blas_lapack=n system_sundials=n system_eigen=n system_fmt=n \
+          system_yamlcpp=n googletest=none
       - name: Archive the built sdist
         uses: actions/upload-artifact@v3
         with:
