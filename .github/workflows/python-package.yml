@@ -22,7 +22,7 @@ env:
   CIBW_BUILD_FRONTEND: build
   CIBW_TEST_EXTRAS: pandas,units
   CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: pytest ${{ runner.temp }}/test/python
+  CIBW_TEST_COMMAND: pytest ${RUNNER_TEMP}/test/python
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
 jobs:
