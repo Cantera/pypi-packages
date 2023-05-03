@@ -22,7 +22,7 @@ env:
   CIBW_BUILD_FRONTEND: build
   CIBW_TEST_EXTRAS: pandas,units
   CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: pytest ${{ env.RUNNER_TEMP }}/test/python
+  CIBW_TEST_COMMAND: pytest ${{ runner.temp }}/test/python
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
 jobs:
@@ -283,7 +283,7 @@ jobs:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_BEFORE_TEST: >
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ env.RUNNER_TEMP }}/cantera.tar.gz && tar -xzf ${{ env.RUNNER_TEMP }}/cantera.tar.gz --strip-components=1 -C ${{ env.RUNNER_TEMP }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
         with:
