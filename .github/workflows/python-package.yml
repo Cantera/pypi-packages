@@ -231,7 +231,7 @@ jobs:
           # NumPy is generally not available for these platforms so testing takes a
           # while. This just skips the tests on these
           # combinations, the wheels are still built and uploaded.
-          CIBW_TEST_SKIP: "*-manylinux_{i686,aarch64,ppc64le,s390x} *musl*"
+          CIBW_TEST_SKIP: "*-manylinux_{i686,ppc64le,s390x} *musl*"
 
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
