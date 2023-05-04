@@ -23,7 +23,6 @@ env:
   CIBW_TEST_EXTRAS: pandas,units
   CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: pytest ${RUNNER_TEMP}/test/python
-  CIBW_TEST_COMMAND_WINDOWS: pytest %RUNNER_TEMP%/test/python
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
 jobs:
@@ -226,7 +225,7 @@ jobs:
           CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} RUNNER_TEMP=${{ runner.temp }}"
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_BEFORE_TEST: >
+          CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
           # NumPy is generally not available for these platforms so testing takes a
           # while. This just skips the tests on these
@@ -280,10 +279,11 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT} RUNNER_TEMP=${{ runner.temp }}"
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT}
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
-          CIBW_BEFORE_TEST: >
+          CIBW_TEST_COMMAND_WINDOWS: pytest ${{ runner.temp }}/test/python
+          CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
@@ -316,12 +316,12 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include RUNNER_TEMP=${{ runner.temp }}"
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include RUNNER_TEMP=${{ runner.temp }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           # Testing won't be available for macOS ARM until native ARM runners are available.
           CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_BEFORE_TEST: >
+          CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
