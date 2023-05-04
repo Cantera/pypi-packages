@@ -224,14 +224,13 @@ jobs:
           CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} RUNNER_TEMP=${{ runner.temp }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_TEST_COMMAND: pytest ./tmp/test/python
+          CIBW_TEST_COMMAND: pytest /tmp/test/python
           # cibuildwheel on Linux uses a Docker container to run the build, so
-          # runner.temp is not available. We can use the container's mounted directory
-          # to create a folder and put the tests there.
+          # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
+          # we should be pretty safe to also use that.
           CIBW_BEFORE_TEST: |
-            mkdir -p ./tmp \
-            && curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ./tmp/cantera.tar.gz \
-            && tar -xzf ./tmp/cantera.tar.gz --strip-components=1 -C ./tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            && curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o /tmp/cantera.tar.gz \
+            && tar -xzf /tmp/cantera.tar.gz --strip-components=1 -C /tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
 
           # NumPy is generally not available for these platforms so testing takes a
           # while. This just skips the tests on these
@@ -303,8 +302,6 @@ jobs:
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
-    env:
-      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     strategy:
       matrix:
         py: ["39", "310", "311"]
@@ -312,12 +309,10 @@ jobs:
         deployment_target: ["11.0"]
         include:
           - py: "38"
-            arch: "x86_64"
             deployment_target: "10.15"
-          - py: "38"
-            arch: "arm64"
-            deployment_target": "10.15"
       fail-fast: true
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v3
