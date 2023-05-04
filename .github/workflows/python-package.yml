@@ -222,11 +222,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} RUNNER_TEMP=${{ runner.temp }}"
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} RUNNER_TEMP=${{ runner.temp }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o cantera.tar.gz
+            tar -xzf cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+
           # NumPy is generally not available for these platforms so testing takes a
           # while. This just skips the tests on these
           # combinations, the wheels are still built and uploaded.
@@ -316,7 +318,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include RUNNER_TEMP=${{ runner.temp }}
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           # Testing won't be available for macOS ARM until native ARM runners are available.
