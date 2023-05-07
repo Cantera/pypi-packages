@@ -20,12 +20,7 @@ concurrency:
 
 env:
   CIBW_BUILD_FRONTEND: build
-  CIBW_BUILD_VERBOSITY: 3
-  CIBW_BEFORE_TEST: >
-    curl -sL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz \
-    && tar -xzf cantera.tar.gz "cantera-${INCOMING_SHA}/test/python"
-  CIBW_TEST_COMMAND: pytest "cantera-${INCOMING_SHA}/test/python"
-  CIBW_TEST_EXTRAS: pandas
+  CIBW_TEST_EXTRAS: pandas,units
   CIBW_TEST_REQUIRES: pytest
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
@@ -122,24 +117,45 @@ jobs:
           submodules: recursive
           ref: ${{ github.event.inputs.incoming_ref }}
       - name: Set Up Python 3.10
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Install dependencies
         run: python3 -m pip install -U pip scons build
       - name: Build the sdist
-        run: python3 `which scons` sdist f90_interface=n python_package='none'
+        run: |
+          python3 `which scons` sdist f90_interface=n python_package='none' \
+          system_blas_lapack=n system_sundials=n system_eigen=n system_fmt=n \
+          system_yamlcpp=n googletest=none
       - name: Archive the built sdist
         uses: actions/upload-artifact@v3
         with:
           path: ./build/python_sdist/dist/*.tar.gz
           name: sdist
           if-no-files-found: error
+      # Copied from https://github.com/hynek/build-and-inspect-python-package/
+      - name: Show SDist contents hierarchically, including metadata.
+        shell: bash
+        run: |
+          mkdir -p /tmp/out/sdist
+          cp build/python_sdist/dist/*.tar.gz /tmp/
+          cd /tmp
+          tar xf *.tar.gz -C out/sdist
+
+          echo -e '\n<details><summary>SDist contents</summary>\n' >> $GITHUB_STEP_SUMMARY
+          (cd /tmp/out/sdist && tree -Da --timefmt="%Y-%m-%dT%H:%M:%SZ" * | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY)
+          echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
+
+          echo ----- Metadata Follows -----
+          echo -e '\n<details><summary>Metadata</summary>\n' >> $GITHUB_STEP_SUMMARY
+          cat out/sdist/*/PKG-INFO | sed 's/^/    /' | tee -a $GITHUB_STEP_SUMMARY
+          echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
+          echo ----- End of Metadata  -----
 
   linux-wheel:
     name: Build ${{ matrix.libc }}linux_${{ matrix.arch }} for py${{ matrix.py }}
     runs-on: ubuntu-20.04
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -203,16 +219,23 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}"
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
-          # h5py is not available as a wheel for these architectures/libc.
-          # Building from h5py source takes _forever_ since NumPy is also
-          # generally not available. This just skips the tests on these
+          # cibuildwheel on Linux uses a Docker container to run the build, so
+          # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
+          # we should be pretty safe to also use that.
+          CIBW_TEST_COMMAND: pytest /tmp/test/python
+          CIBW_BEFORE_TEST: |
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o /tmp/cantera.tar.gz \
+            && tar -xzf /tmp/cantera.tar.gz --strip-components=1 -C /tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+
+          # NumPy is generally not available for these platforms so testing takes a
+          # while. This just skips the tests on these
           # combinations, the wheels are still built and uploaded.
-          CIBW_TEST_SKIP: "*-manylinux_{i686,aarch64,ppc64le,s390x} *musl*"
+          CIBW_TEST_SKIP: "*-manylinux_{i686,ppc64le,s390x} *musl*"
 
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
@@ -223,7 +246,7 @@ jobs:
   windows-wheel:
     name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
     runs-on: windows-2019
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -259,32 +282,41 @@ jobs:
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT}
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
-          CIBW_BUILD_FRONTEND: pip
-          # h5py is not available as a wheel for win32
-          CIBW_TEST_SKIP: "*-win32"
+          CIBW_TEST_COMMAND: pytest ${{ runner.temp }}/test/python
+          CIBW_BEFORE_TEST: |
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
           name: wheels
 
-  macos-intel-wheel:
-    name: Build Intel macOS Wheels for py${{ matrix.py }}
+  macos-wheel:
+    name: Build ${{ matrix.arch }} macOS Wheels for py${{ matrix.py }}
     runs-on: macos-11
-    needs: ["sdist"]
+    needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
     strategy:
       matrix:
-        py: ["38", "39", "310", "311"]
+        py: ["39", "310", "311"]
+        arch: ["x86_64", "arm64"]
+        deployment_target: ["11.0"]
+        include:
+          - py: "38"
+            deployment_target: "10.15"
+            arch: "x86_64"
+          - py: "38"
+            deployment_target: "10.15"
+            arch: "arm64"
       fail-fast: true
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v3
@@ -295,51 +327,16 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
         env:
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }}
           CIBW_BUILD: cp${{ matrix.py }}-*
-          CIBW_ARCHS: "x86_64"
-
-      - name: Archive the built wheels
-        uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
-          name: wheels
-
-  macos-arm-wheel:
-    name: Build arm64 macOS Wheels for py${{ matrix.py }}
-    runs-on: macos-11
-    needs: ["sdist"]
-    outputs:
-      job-status: ${{ job.status }}
-    strategy:
-      matrix:
-        py: ["38", "39", "310", "311"]
-      fail-fast: true
-    env:
-      SDKROOT: "macosx11.0"
-      _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
-      ARCHFLAGS: "-arch arm64"
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
-      DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
-    steps:
-      - name: Download pre-built sdist
-        uses: actions/download-artifact@v3
-        with:
-          name: sdist
-      - name: Extract the sdist tarball
-        run: tar -xvf *.tar.gz --strip-components=1
-      - name: Install Brew dependencies
-        run: brew install boost
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
-        env:
-          CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
-          CIBW_ARCHS: "arm64"
-          CIBW_BUILD: cp${{ matrix.py }}-*
-          # Testing won't be available for macOS ARM until native ARM
-          # runners are available.
+          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
+          # Testing won't be available for macOS ARM until native ARM runners are available.
           CIBW_TEST_SKIP: "*-macosx_arm64"
+          CIBW_TEST_COMMAND: pytest ${RUNNER_TEMP}/test/python
+          CIBW_BEFORE_TEST: |
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v3
         with:
@@ -355,8 +352,7 @@ jobs:
       - "sdist"
       - "linux-wheel"
       - "windows-wheel"
-      - "macos-intel-wheel"
-      - "macos-arm-wheel"
+      - "macos-wheel"
     if: github.event.inputs.upload == 'true'
     steps:
       - name: Download pre-built wheels
@@ -383,8 +379,7 @@ jobs:
       - "sdist"
       - "linux-wheel"
       - "windows-wheel"
-      - "macos-intel-wheel"
-      - "macos-arm-wheel"
+      - "macos-wheel"
       - "publish-files-to-pypi"
     if: always()
     steps:
