@@ -221,13 +221,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.3
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} RUNNER_TEMP=${{ runner.temp }}
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_TEST_COMMAND: pytest /tmp/test/python
           # cibuildwheel on Linux uses a Docker container to run the build, so
           # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
           # we should be pretty safe to also use that.
+          CIBW_TEST_COMMAND: pytest /tmp/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o /tmp/cantera.tar.gz \
             && tar -xzf /tmp/cantera.tar.gz --strip-components=1 -C /tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
