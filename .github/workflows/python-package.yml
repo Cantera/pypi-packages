@@ -391,8 +391,7 @@ jobs:
               "sdist": "${{needs.sdist.outputs.job-status}}",
               "linux": "${{needs.linux-wheel.outputs.job-status}}",
               "windows": "${{needs.windows-wheel.outputs.job-status}}",
-              "macos-intel": "${{needs.macos-intel-wheel.outputs.job-status}}",
-              "macos-arm": "${{needs.macos-arm-wheel.outputs.job-status}}",
+              "macos": "${{needs.macos-wheel.outputs.job-status}}",
               "publish": "${{needs.publish-files-to-pypi.outputs.job-status}}",
           }
           # This is a deliberate comparison to the empty string.
