@@ -397,6 +397,9 @@ jobs:
           # This is a deliberate comparison to the empty string.
           if statuses["publish"] == "" and "${{ github.event.inputs.upload }}" == "false":
               publish = statuses.pop("publish")
+          else:
+              publish = ""
+
           if all(v == "success" for v in statuses.values()):
               overall_status = "success"
           elif any(v in ("cancelled", "") for v in statuses.values()):
@@ -405,7 +408,7 @@ jobs:
               overall_status = "failure"
 
           status_counts = Counter(statuses.values())
-          status_counts.update(publish)
+          status_counts.update([publish])
           description = []
           if overall_status in ("error", "failure"):
               if status_counts.get("success") is not None:
