@@ -227,7 +227,7 @@ jobs:
           # cibuildwheel on Linux uses a Docker container to run the build, so
           # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
           # we should be pretty safe to also use that.
-          CIBW_TEST_COMMAND: pytest /tmp/test/python
+          CIBW_TEST_COMMAND: pytest -vv --durations=100 /tmp/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o /tmp/cantera.tar.gz \
             && tar -xzf /tmp/cantera.tar.gz --strip-components=1 -C /tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
@@ -287,7 +287,7 @@ jobs:
           CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
-          CIBW_TEST_COMMAND: pytest ${{ runner.temp }}/test/python
+          CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
@@ -334,7 +334,7 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           # Testing won't be available for macOS ARM until native ARM runners are available.
           CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_TEST_COMMAND: pytest ${RUNNER_TEMP}/test/python
+          CIBW_TEST_COMMAND: pytest -vv --durations=100 ${RUNNER_TEMP}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
