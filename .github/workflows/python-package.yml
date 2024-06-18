@@ -116,10 +116,10 @@ jobs:
           repository: "Cantera/cantera"
           submodules: recursive
           ref: ${{ github.event.inputs.incoming_ref }}
-      - name: Set Up Python 3.10
-        uses: actions/setup-python@v4
+      - name: Set Up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install dependencies
         run: python3 -m pip install -U pip scons build
       - name: Build the sdist
@@ -128,7 +128,7 @@ jobs:
           system_blas_lapack=n system_sundials=n system_eigen=n system_fmt=n \
           system_yamlcpp=n googletest=none
       - name: Archive the built sdist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./build/python_sdist/dist/*.tar.gz
           name: sdist
@@ -154,16 +154,25 @@ jobs:
 
   linux-wheel:
     name: Build ${{ matrix.libc }}linux_${{ matrix.arch }} for py${{ matrix.py }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["38", "39", "310", "311"]
+        py: ["38", "39", "310", "311", "312"]
         arch: ["x86_64", "i686"]
         libc: ["many", "musl"]
         include:
+          - py: "312"
+            arch: "aarch64"
+            libc: "many"
+          - py: "312"
+            arch: "ppc64le"
+            libc: "many"
+          - py: "312"
+            arch: "s390x"
+            libc: "many"
           - py: "311"
             arch: "aarch64"
             libc: "many"
@@ -194,7 +203,7 @@ jobs:
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sdist
       - name: Extract the sdist tarball
@@ -219,7 +228,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.3
+        uses: pypa/cibuildwheel@v2.19.1
         env:
           CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
@@ -238,7 +247,7 @@ jobs:
           CIBW_TEST_SKIP: "*-manylinux_{i686,ppc64le,s390x} *musl*"
 
       - name: Archive the built wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           name: wheels
