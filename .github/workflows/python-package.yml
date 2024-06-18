@@ -255,7 +255,7 @@ jobs:
           name: cibw-wheels-linux-${{ strategy.job-index }}
 
   windows-wheel:
-    name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
+    name: Build Windows Wheels for py${{ matrix.py }}
     runs-on: windows-2019
     needs: ["sdist", "post-pending-status"]
     outputs:
@@ -263,7 +263,6 @@ jobs:
     strategy:
       matrix:
         py: ["38", "39", "310", "311", "312"]
-        arch: ["AMD64", "x86"]
       fail-fast: false
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
@@ -296,7 +295,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.19.1
         env:
           CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
-          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_ARCHS: "AMD64"
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
