@@ -341,8 +341,6 @@ jobs:
         env:
           CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
           CIBW_BUILD: cp${{ matrix.py }}-*
-          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
-          # Testing won't be available for macOS ARM until native ARM runners are available.
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${RUNNER_TEMP}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
