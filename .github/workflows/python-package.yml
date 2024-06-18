@@ -161,43 +161,43 @@ jobs:
     strategy:
       matrix:
         py: ["38", "39", "310", "311", "312"]
-        arch: ["x86_64", "i686"]
-        libc: ["many", "musl"]
-        include:
-          - py: "312"
-            arch: "aarch64"
-            libc: "many"
-          - py: "312"
-            arch: "ppc64le"
-            libc: "many"
-          - py: "312"
-            arch: "s390x"
-            libc: "many"
-          - py: "311"
-            arch: "aarch64"
-            libc: "many"
-          - py: "311"
-            arch: "ppc64le"
-            libc: "many"
-          - py: "311"
-            arch: "s390x"
-            libc: "many"
-          - py: "310"
-            arch: "aarch64"
-            libc: "many"
-          - py: "310"
-            arch: "ppc64le"
-            libc: "many"
-          - py: "310"
-            arch: "s390x"
-            libc: "many"
-          - py: "39"
-            arch: "aarch64"
-            libc: "many"
-          - py: "38"
-            arch: "aarch64"
-            libc: "many"
-      fail-fast: true
+        arch: ["x86_64"] #, "i686"]
+        libc: ["many"] #, "musl"]
+        # include:
+        #   - py: "312"
+        #     arch: "aarch64"
+        #     libc: "many"
+        #   - py: "312"
+        #     arch: "ppc64le"
+        #     libc: "many"
+        #   - py: "312"
+        #     arch: "s390x"
+        #     libc: "many"
+        #   - py: "311"
+        #     arch: "aarch64"
+        #     libc: "many"
+        #   - py: "311"
+        #     arch: "ppc64le"
+        #     libc: "many"
+        #   - py: "311"
+        #     arch: "s390x"
+        #     libc: "many"
+        #   - py: "310"
+        #     arch: "aarch64"
+        #     libc: "many"
+        #   - py: "310"
+        #     arch: "ppc64le"
+        #     libc: "many"
+        #   - py: "310"
+        #     arch: "s390x"
+        #     libc: "many"
+        #   - py: "39"
+        #     arch: "aarch64"
+        #     libc: "many"
+        #   - py: "38"
+        #     arch: "aarch64"
+        #     libc: "many"
+      fail-fast: false
     env:
       BOOST_INCLUDE: include
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
@@ -230,7 +230,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.1
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1 FORCE_CYTHON_COMPILE=${{ matrix.py == '38' }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           # cibuildwheel on Linux uses a Docker container to run the build, so
@@ -268,7 +268,7 @@ jobs:
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sdist
       - name: Extract the sdist tarball
@@ -291,7 +291,7 @@ jobs:
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.3
+        uses: pypa/cibuildwheel@v2.19.1
         env:
           CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -300,7 +300,7 @@ jobs:
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           name: wheels
@@ -328,7 +328,7 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sdist
       - name: Extract the sdist tarball
@@ -336,7 +336,7 @@ jobs:
       - name: Install Brew dependencies
         run: brew install boost
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.3
+        uses: pypa/cibuildwheel@v2.19.1
         env:
           CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1
           CIBW_BUILD: cp${{ matrix.py }}-*
@@ -347,7 +347,7 @@ jobs:
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           name: wheels
@@ -365,12 +365,12 @@ jobs:
     if: github.event.inputs.upload == 'true'
     steps:
       - name: Download pre-built wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: dist/
           name: wheels
       - name: Download pre-build sdist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: dist/
           name: sdist
