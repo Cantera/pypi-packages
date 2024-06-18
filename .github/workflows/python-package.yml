@@ -209,7 +209,7 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       - name: Restore Boost cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-boost
         with:
           path: ${{ env.BOOST_INCLUDE }}/boost
@@ -224,13 +224,13 @@ jobs:
           rm $BOOST_INCLUDE/download.7z
           rm -r $BOOST_INCLUDE/boost_1_78_0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: all
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.1
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1 FORCE_CYTHON_COMPILE=${{ matrix.py == '38' }}
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           # cibuildwheel on Linux uses a Docker container to run the build, so
@@ -250,7 +250,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
-          name: wheels
+          name: cibw-wheels-linux-${{ strategy.job-index }}
 
   windows-wheel:
     name: Build ${{ matrix.arch }} Windows Wheels for py${{ matrix.py }}
@@ -260,9 +260,9 @@ jobs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["38", "39", "310", "311"]
+        py: ["38", "39", "310", "311", "312"]
         arch: ["AMD64", "x86"]
-      fail-fast: true
+      fail-fast: false
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
@@ -275,7 +275,7 @@ jobs:
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
       - name: Restore Boost cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-boost
         with:
           path: ${{env.BOOST_ROOT}}
@@ -293,7 +293,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.1
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
@@ -303,7 +303,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
-          name: wheels
+          name: cibw-wheels-windows-${{ strategy.job-index }}
 
   macos-wheel:
     name: Build ${{ matrix.arch }} macOS Wheels for py${{ matrix.py }}
@@ -313,7 +313,7 @@ jobs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["39", "310", "311"]
+        py: ["39", "310", "311", "312"]
         arch: ["x86_64", "arm64"]
         deployment_target: ["11.0"]
         include:
@@ -338,7 +338,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.1
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           # Testing won't be available for macOS ARM until native ARM runners are available.
@@ -350,7 +350,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
-          name: wheels
+          name: cibw-wheels-macos-${{ strategy.job-index }}
 
   publish-files-to-pypi:
     name: Publish distribution files to PyPI
