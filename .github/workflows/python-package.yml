@@ -308,19 +308,19 @@ jobs:
 
   macos-wheel:
     name: Build ${{ matrix.macos-version }} Wheels for py${{ matrix.py }}
-    runs-on: ${{ matrix.macos-version }}
+    runs-on: macos-14
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        macos-version: [ "macos-13", "macos-14" ]
+        macos-version: [ "macos-14" ]
         py: [ "39", "310", "311", "312" ]
         deployment_target: ["11.0"]
         include:
-          - py: "38"
-            deployment_target: "10.15"
-            macos-version: "macos-13"
+          # - py: "38"
+          #   deployment_target: "10.15"
+          #   macos-version: "macos-13"
           - py: "38"
             deployment_target: "10.15"
             macos-oversion: "macos-14"
