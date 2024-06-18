@@ -308,24 +308,24 @@ jobs:
           name: cibw-wheels-windows-${{ strategy.job-index }}
 
   macos-wheel:
-    name: Build ${{ matrix.arch }} macOS Wheels for py${{ matrix.py }}
-    runs-on: macos-11
+    name: Build ${{ matrix.macos-version }} Wheels for py${{ matrix.py }}
+    runs-on: ${{ matrix.macos-version }}
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["39", "310", "311", "312"]
-        arch: ["x86_64", "arm64"]
+        macos-version: [ "macos-13", "macos-14" ]
+        py: [ "39", "310", "311", "312" ]
         deployment_target: ["11.0"]
         include:
           - py: "38"
             deployment_target: "10.15"
-            arch: "x86_64"
+            macos-version: "macos-13"
           - py: "38"
             deployment_target: "10.15"
-            arch: "arm64"
-      fail-fast: true
+            macos-oversion: "macos-14"
+      fail-fast: false
     env:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
@@ -344,7 +344,6 @@ jobs:
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           # Testing won't be available for macOS ARM until native ARM runners are available.
-          CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${RUNNER_TEMP}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
