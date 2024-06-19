@@ -116,7 +116,6 @@ jobs:
           repository: "Cantera/cantera"
           submodules: recursive
           ref: ${{ github.event.inputs.incoming_ref }}
-          depth: 1
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
