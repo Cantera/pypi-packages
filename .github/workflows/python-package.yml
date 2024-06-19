@@ -336,6 +336,8 @@ jobs:
           merge-multiple: true
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
