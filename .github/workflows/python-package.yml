@@ -164,41 +164,41 @@ jobs:
       matrix:
         py: ["38", "39", "310", "311", "312"]
         arch: ["x86_64"] #, "i686"]
-        libc: ["many"] #, "musl"]
-        # include:
-        #   - py: "312"
-        #     arch: "aarch64"
-        #     libc: "many"
+        libc: ["many", "musl"]
+        include:
+          - py: "312"
+            arch: "aarch64"
+            libc: "many"
         #   - py: "312"
         #     arch: "ppc64le"
         #     libc: "many"
         #   - py: "312"
         #     arch: "s390x"
         #     libc: "many"
-        #   - py: "311"
-        #     arch: "aarch64"
-        #     libc: "many"
+          - py: "311"
+            arch: "aarch64"
+            libc: "many"
         #   - py: "311"
         #     arch: "ppc64le"
         #     libc: "many"
         #   - py: "311"
         #     arch: "s390x"
         #     libc: "many"
-        #   - py: "310"
-        #     arch: "aarch64"
-        #     libc: "many"
+          - py: "310"
+            arch: "aarch64"
+            libc: "many"
         #   - py: "310"
         #     arch: "ppc64le"
         #     libc: "many"
         #   - py: "310"
         #     arch: "s390x"
         #     libc: "many"
-        #   - py: "39"
-        #     arch: "aarch64"
-        #     libc: "many"
-        #   - py: "38"
-        #     arch: "aarch64"
-        #     libc: "many"
+          - py: "39"
+            arch: "aarch64"
+            libc: "many"
+          - py: "38"
+            arch: "aarch64"
+            libc: "many"
       fail-fast: false
     env:
       BOOST_INCLUDE: include
@@ -308,22 +308,22 @@ jobs:
 
   macos-wheel:
     name: Build ${{ matrix.macos-version }} Wheels for py${{ matrix.py }}
-    runs-on: macos-14
+    runs-on: ${{ matrix.macos-version }}
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        macos-version: [ "macos-14" ]
+        macos-version: [ "macos-13", "macos-14" ]
         py: [ "39", "310", "311", "312" ]
-        deployment_target: ["11.0"]
+        deployment_target: [ "11.0" ]
         include:
-          # - py: "38"
-          #   deployment_target: "10.15"
-          #   macos-version: "macos-13"
           - py: "38"
             deployment_target: "10.15"
-            macos-oversion: "macos-14"
+            macos-version: "macos-13"
+          - py: "38"
+            deployment_target: "10.15"
+            macos-version: "macos-14"
       fail-fast: false
     env:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
