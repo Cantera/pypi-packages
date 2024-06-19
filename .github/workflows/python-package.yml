@@ -133,7 +133,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./build/python_sdist/dist/*.tar.gz
-          name: sdist
+          name: cibw-sdist
           if-no-files-found: error
       # Copied from https://github.com/hynek/build-and-inspect-python-package/
       - name: Show SDist contents hierarchically, including metadata.
@@ -173,7 +173,7 @@ jobs:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
         with:
-          name: sdist
+          name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       - name: Restore Boost cache
@@ -237,7 +237,7 @@ jobs:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
         with:
-          name: sdist
+          name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
@@ -294,7 +294,7 @@ jobs:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
         with:
-          name: sdist
+          name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       - name: Install Brew dependencies
@@ -324,22 +324,18 @@ jobs:
       - "windows-wheel"
       - "macos-wheel"
     if: github.event.inputs.upload == 'true'
+    permissions:
+      id-token: write
+    environment: pypi
     steps:
       - name: Download pre-built wheels
         uses: actions/download-artifact@v4
         with:
-          path: dist/
-          name: wheels
-      - name: Download pre-build sdist
-        uses: actions/download-artifact@v4
-        with:
-          path: dist/
-          name: sdist
+          path: dist
+          name: cibw-*
+          merge-multiple: true
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
