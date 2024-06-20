@@ -163,7 +163,7 @@ jobs:
     strategy:
       matrix:
         py: ["38", "39", "310", "311", "312"]
-        arch: ["x86_64"]#, "aarch64"]
+        arch: ["x86_64", "aarch64"]
         libc: ["many"]
       fail-fast: true
     env:
