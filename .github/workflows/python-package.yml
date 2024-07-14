@@ -157,7 +157,7 @@ jobs:
         py: ["38", "39", "310", "311", "312"]
         arch: ["x86_64", "aarch64"]
         libc: ["many"]
-      fail-fast: true
+      fail-fast: false
     env:
       BOOST_INCLUDE: include
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.7z
@@ -213,7 +213,7 @@ jobs:
     strategy:
       matrix:
         py: ["38", "39", "310", "311", "312"]
-      fail-fast: true
+      fail-fast: false
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
       BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.7z
@@ -272,7 +272,7 @@ jobs:
           - py: "38"
             deployment_target: "11.0"
             macos-version: "macos-13"
-      fail-fast: true
+      fail-fast: false
     env:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
@@ -283,7 +283,7 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       - name: Install Brew dependencies
-        run: brew install boost
+        run: brew install boost hdf5
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
