@@ -106,10 +106,6 @@ jobs:
     outputs:
       job-status: ${{ job.status }}
     steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install libboost-dev
       - uses: actions/checkout@v4
         name: Checkout the repository
         with:
@@ -124,11 +120,7 @@ jobs:
         run: python3 -m pip install -U pip scons build
       - name: Build the sdist
         run: |
-          python3 `which scons` sdist f90_interface=n python_package='none' \
-          system_blas_lapack=n system_sundials=n system_eigen=n system_fmt=n \
-          system_yamlcpp=n googletest=none env_vars='CYTHON_FORCE_REGEN'
-        env:
-          CYTHON_FORCE_REGEN: "1"
+          python3 `which scons` sdist
       - name: Archive the built sdist
         uses: actions/upload-artifact@v4
         with:
