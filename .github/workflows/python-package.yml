@@ -160,7 +160,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_INCLUDE: include
-      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
+      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
@@ -179,10 +179,10 @@ jobs:
         run: |
           mkdir -p $BOOST_INCLUDE
           curl --progress-bar --location --output $BOOST_INCLUDE/download.7z $BOOST_URL
-          7z -o$BOOST_INCLUDE x $BOOST_INCLUDE/download.7z -y -bd boost_1_78_0/boost
-          mv $BOOST_INCLUDE/boost_1_78_0/boost $BOOST_INCLUDE/boost
+          7z -o$BOOST_INCLUDE x $BOOST_INCLUDE/download.7z -y -bd boost_1_85_0/boost
+          mv $BOOST_INCLUDE/boost_1_85_0/boost $BOOST_INCLUDE/boost
           rm $BOOST_INCLUDE/download.7z
-          rm -r $BOOST_INCLUDE/boost_1_78_0
+          rm -r $BOOST_INCLUDE/boost_1_85_0
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -190,7 +190,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${{ env.BOOST_INCLUDE }} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
+          CIBW_ENVIRONMENT: CT_SKIP_SLOW=1
           CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
           CIBW_ARCHS: ${{ matrix.arch }}
           # cibuildwheel on Linux uses a Docker container to run the build, so
@@ -218,7 +218,7 @@ jobs:
       fail-fast: true
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
+      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
@@ -239,19 +239,20 @@ jobs:
           BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
           mkdir -p $BOOST_ROOT
           curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_78_0/boost
-          mv $BOOST_ROOT/boost_1_78_0/boost $BOOST_ROOT/boost
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_85_0/boost
+          mv $BOOST_ROOT/boost_1_85_0/boost $BOOST_ROOT/boost
           rm $BOOST_ROOT/download.7z
         shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
+          CIBW_ENVIRONMENT: BOOST_INCLUDE=${BOOST_ROOT} CT_SKIP_SLOW=1
           CIBW_ARCHS: "AMD64"
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && \
+            tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v4
         with:
@@ -288,11 +289,12 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1 CYTHON_FORCE_REGEN=${{ matrix.py == '38' && '1' || '0' }}
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1
           CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${RUNNER_TEMP}/test/python
           CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz &&
+            tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v4
         with:
