@@ -207,18 +207,12 @@ jobs:
           name: cibw-wheels-linux-${{ strategy.job-index }}
 
   windows-wheel:
-    name: Build Windows Wheels for py${{ matrix.py }}
-    runs-on: windows-2019
+    name: Build Windows Wheels
+    runs-on: windows-2022
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
-    strategy:
-      matrix:
-        py: ["38", "39", "310", "311", "312"]
       fail-fast: false
-    env:
-      BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-      BOOST_URL: https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.7z
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
@@ -227,28 +221,37 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
-      - name: Restore Boost cache
-        uses: actions/cache@v4
-        id: cache-boost
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2.4.5
+        id: install-boost
         with:
-          path: ${{env.BOOST_ROOT}}
-          key: boost-${{env.BOOST_URL}}
-      - name: Install Boost Headers
-        if: steps.cache-boost.outputs.cache-hit != 'true'
-        run: |
-          BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
-          mkdir -p $BOOST_ROOT
-          curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_85_0/boost
-          mv $BOOST_ROOT/boost_1_85_0/boost $BOOST_ROOT/boost
-          rm $BOOST_ROOT/download.7z
-        shell: bash
+            # REQUIRED: Specify the required boost version
+            # A list of supported versions can be found here:
+            # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
+            boost_version: "1.85.0"
+            # OPTIONAL: Specify a custon install location
+            boost_install_dir: ${{ github.workspace }}
+      # Cache HDF5
+      - name: Cache built HDF5
+        uses: actions/cache@v4
+        with:
+          key: windows-amd64-0
+          path: cache/hdf5
+
+      # Windows HDF5
+      - uses: nuget/setup-nuget@v2
+        if: runner.os == 'Windows'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+        if: runner.os == 'Windows'
+      - run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
+        if: runner.os == 'Windows'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: Boost_INCLUDE_DIRS=${BOOST_ROOT} CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT: Boost_INCLUDE_DIRS=${{ steps.install-boost.outputs.BOOST_ROOT }}\\include CT_SKIP_SLOW=1
           CIBW_ARCHS: "AMD64"
-          CIBW_BUILD: cp${{ matrix.py }}-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && \
@@ -257,7 +260,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
-          name: cibw-wheels-windows-${{ strategy.job-index }}
+          name: cibw-wheels-windows-1
 
   macos-wheel:
     name: Build ${{ matrix.macos-version }} Wheels for py${{ matrix.py }}
