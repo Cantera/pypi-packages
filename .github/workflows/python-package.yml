@@ -151,9 +151,14 @@ jobs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        py: ["38", "39", "310", "311", "312"]
-        arch: ["x86_64", "aarch64"]
-        libc: ["many"]
+        # Wheel builds are fast except for aarch64, so split that into multiple jobs,
+        # one for each Python version
+        os: [ubuntu-latest]
+        arch: [aarch64]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
       fail-fast: false
     env:
       BOOST_INCLUDE: include
@@ -184,10 +189,16 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
+        if: ${{ matrix.arch }} != 'x86_64'
+      - name: Set some vars
+        run: |
+          PYTHON="${{ matrix.python }}"
+          CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
+          echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_BUILD: cp${{ matrix.py }}-${{ matrix.libc }}linux*
+          CIBW_BUILD: ${{ env.CIBW_BUILD }}
           CIBW_ARCHS: ${{ matrix.arch }}
           # cibuildwheel on Linux uses a Docker container to run the build, so
           # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
