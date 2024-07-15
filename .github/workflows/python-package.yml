@@ -19,9 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBW_BUILD_FRONTEND: build
-  CIBW_TEST_EXTRAS: pandas,units,graphviz
-  CIBW_TEST_REQUIRES: pytest
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
 jobs:
