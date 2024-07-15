@@ -263,23 +263,19 @@ jobs:
           name: cibw-wheels-windows-1
 
   macos-wheel:
-    name: Build ${{ matrix.macos-version }} Wheels for py${{ matrix.py }}
-    runs-on: ${{ matrix.macos-version }}
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        macos-version: [ "macos-13", "macos-14" ]
-        py: [ "39", "310", "311", "312" ]
-        deployment_target: [ "11.0" ]
         include:
-          - py: "38"
-            deployment_target: "11.0"
-            macos-version: "macos-13"
+          - os: macos-14
+            arch: arm64
+          - os: macos-13
+            arch: x86_64
       fail-fast: false
-    env:
-      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
     steps:
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
@@ -287,13 +283,29 @@ jobs:
           name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
-      - name: Install Brew dependencies
-        run: brew install boost hdf5
+      # macOS HDF5
+      - run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
+        if: runner.os == 'macOS'
+      # Hack for 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.8
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2.4.5
+        id: install-boost
+        with:
+            # REQUIRED: Specify the required boost version
+            # A list of supported versions can be found here:
+            # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
+            boost_version: "1.85.0"
+            # OPTIONAL: Specify a custon install location
+            boost_install_dir: ${{ github.workspace }}
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: BOOST_INCLUDE="$(brew --prefix)/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1
-          CIBW_BUILD: cp${{ matrix.py }}-*
+          CIBW_ENVIRONMENT: BOOST_INCLUDE="${{ steps.install-boost.outputs.BOOST_ROOT }}/include" RUNNER_TEMP=${{ runner.temp }} CT_SKIP_SLOW=1
+          CIBW_BUILD: cp*-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${RUNNER_TEMP}/test/python
           CIBW_BEFORE_TEST: |
             curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz &&
