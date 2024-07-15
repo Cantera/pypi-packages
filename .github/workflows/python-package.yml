@@ -144,7 +144,7 @@ jobs:
           echo ----- End of Metadata  -----
 
   linux-wheel:
-    name: Build ${{ matrix.libc }}linux_${{ matrix.arch }} for py${{ matrix.py }}
+    name: Build Linux_${{ matrix.arch }} for py${{ matrix.python || '-all' }}
     runs-on: ubuntu-22.04
     needs: ["sdist", "post-pending-status"]
     outputs:
@@ -193,6 +193,7 @@ jobs:
       - name: Set some vars
         run: |
           PYTHON="${{ matrix.python }}"
+          if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
           CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
           echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
       - name: Build wheels
