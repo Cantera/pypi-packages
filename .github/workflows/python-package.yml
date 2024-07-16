@@ -274,7 +274,7 @@ jobs:
       matrix:
         include:
           - os: macos-14
-            arch: arm64
+            arch: aarch64
             boost-toolset: clang
             # Since we only use the headers, we can use the platform version for this
             # macos version
@@ -304,7 +304,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.8
-        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        if: runner.os == 'macOS' && matrix.arch == 'aarch64'
       - name: Install boost
         uses: MarkusJx/install-boost@v2.4.5
         id: install-boost
@@ -317,6 +317,7 @@ jobs:
             boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
+            arch: ${{ matrix.arch }}
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
