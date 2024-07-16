@@ -158,11 +158,13 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         boost-toolset: ["gcc"]
         boost-platform-version: ["22.04"]
+        boost-version: ["1.85.0"]
         include:
           - os: ubuntu-latest
             arch: x86_64
             boost-toolset: "gcc"
             boost-platform-version: "22.04"
+            boost-version: "1.85.0"
       fail-fast: false
     steps:
       - name: Download pre-built sdist
@@ -178,7 +180,7 @@ jobs:
             # REQUIRED: Specify the required boost version
             # A list of supported versions can be found here:
             # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-            boost_version: "1.85.0"
+            boost_version: ${{ matrix.boost-version }}
             # OPTIONAL: Specify a custon install location
             boost_install_dir: ${{ github.workspace }}
             toolset: ${{ matrix.boost-toolset }}
@@ -229,6 +231,7 @@ jobs:
           arch: AMD64
           boost-toolset: msvc
           boost-platform-version: 2022
+          boost-version: "1.85.0"
     steps:
       - uses: actions/checkout@v4
         name: Checkout the repository
@@ -246,9 +249,9 @@ jobs:
             # REQUIRED: Specify the required boost version
             # A list of supported versions can be found here:
             # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-            boost_version: "1.85.0"
+            boost_version: ${{ matrix.boost-version }}
             # OPTIONAL: Specify a custon install location
-            boost_install_dir: ${{ github.workspace }}
+            boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
       # Cache HDF5
@@ -265,7 +268,7 @@ jobs:
         with:
           python-version: 3.12
         if: runner.os == 'Windows'
-      - run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
+      - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
         if: runner.os == 'Windows'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
@@ -294,11 +297,17 @@ jobs:
           - os: macos-14
             arch: arm64
             boost-toolset: clang
-            boost-platform-version: "11"
+            # Since we only use the headers, we can use the platform version for this
+            # macos version
+            boost-platform-version: "14"
+            boost-version: "1.85.0"
           - os: macos-13
             arch: x86_64
             boost-toolset: clang
-            boost-platform-version: "10.15"
+            # Since we only use the headers, we can use the platform version for this
+            # macos version
+            boost-platform-version: "13"
+            boost-version: "1.85.0"
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -310,7 +319,7 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
       # macOS HDF5
-      - run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
+      - run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
         if: runner.os == 'macOS'
       # Hack for 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
       - uses: actions/setup-python@v5
@@ -324,9 +333,9 @@ jobs:
             # REQUIRED: Specify the required boost version
             # A list of supported versions can be found here:
             # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-            boost_version: "1.85.0"
+            boost_version: ${{ matrix.boost-version }}
             # OPTIONAL: Specify a custon install location
-            boost_install_dir: ${{ github.workspace }}
+            boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
       - name: Build wheels
