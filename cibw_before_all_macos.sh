@@ -38,10 +38,11 @@ if [[ "$1" == "" ]] ; then
     exit 1
 fi
 PROJECT_PATH="$1"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
 export HDF5_VERSION="1.12.2"
 export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION-$ARCH"
-source $PROJECT_PATH/get_hdf5_if_needed.sh
+source $SCRIPT_DIR/get_hdf5_if_needed.sh
 
 if [[ "$GITHUB_ENV" != "" ]]; then
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV

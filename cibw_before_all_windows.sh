@@ -53,7 +53,8 @@ export HDF5_VSVERSION="17-64"
 export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION"
 
 python -m pip install requests
-python $PROJECT_PATH/get_hdf5_win.py
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+python $SCRIPT_DIR/get_hdf5_win.py
 
 if [[ "$GITHUB_ENV" != "" ]] ; then
     # PATH on windows is special
