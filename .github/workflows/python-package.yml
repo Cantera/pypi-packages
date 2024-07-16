@@ -237,8 +237,8 @@ jobs:
       - name: Cache built HDF5
         uses: actions/cache@v4
         with:
-          key: windows-amd64-0
-          path: cache/hdf5
+          key: ${{ matrix.os }}-${{ matrix.arch }}-0
+          path: ${{ runner.temp }}/cache/hdf5
 
       # Windows HDF5
       - uses: nuget/setup-nuget@v2
@@ -297,6 +297,12 @@ jobs:
           name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
+      # Cache HDF5
+      - name: Cache built HDF5
+        uses: actions/cache@v4
+        with:
+          key: ${{ matrix.os }}-${{ matrix.arch }}-0
+          path: ${{ runner.temp }}/cache/hdf5
       # macOS HDF5
       - run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
         if: runner.os == 'macOS'
