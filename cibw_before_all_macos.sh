@@ -101,7 +101,9 @@ popd
 curl -fsSLO "https://gitlab.dkrz.de/k202009/libaec/uploads/45b10e42123edd26ab7b3ad92bcf7be2/libaec-${LIBAEC_VERSION}.tar.gz"
 tar -xzf libaec-${LIBAEC_VERSION}.tar.gz
 mkdir -p libaec-${LIBAEC_VERSION}/build
-pushd libaec-${LIBAEC_VERSION}/build
+pushd libaec-${LIBAEC_VERSION}
+patch -p0 < ${SCRIPT_DIR}/libaec_cmakelists.patch
+pushd build
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -111,7 +113,7 @@ cmake -G Ninja \
 
 ninja
 popd
-
+popd
 
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5.tar.gz"
 tar -xzf hdf5.tar.gz
