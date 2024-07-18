@@ -63,7 +63,7 @@ if [[ "${ARCH}" == "arm64" ]]; then
     export MACOSX_DEPLOYMENT_TARGET="11.0"
 else
     # This is the minimum version for Cantera
-    export MACOSX_DEPLOYMENT_TARGET="10.14"
+    export MACOSX_DEPLOYMENT_TARGET="10.15"
 fi
 
 lib_name=libhdf5.dylib
