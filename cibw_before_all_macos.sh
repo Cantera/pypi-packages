@@ -43,16 +43,23 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
 
 ZLIB_VERSION="1.3.1"
-HDF5_VERSION="1.14.4.3"
 LIBAEC_VERSION="1.0.6"
+
+HDF5_VERSION="1.14.4.3"
+# Replace the last dot with a dash because that's what some of the files in this
+# release have done.
+HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
 ZLIB_DIR="${PROJECT_PATH}/cache/zlib/${ZLIB_VERSION}-${ARCH}"
 LIBAEC_DIR="${PROJECT_PATH}/cache/libaec/${LIBAEC_VERSION}-${ARCH}"
+
+LD_LIBRARY_PATH="${ZLIB_DIR}/lib:${LD_LIBRARY_PATH}"
+
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
 # https://github.com/pypa/cibuildwheel/blob/89a5cfe2721c179f4368a2790669e697759b6644/cibuildwheel/macos.py#L296-L310
-if [[ "$ARCH" == "arm64" ]]; then
+if [[ "${ARCH}" == "arm64" ]]; then
     export MACOSX_DEPLOYMENT_TARGET="11.0"
 else
     # This is the minimum version for Cantera
@@ -62,12 +69,11 @@ fi
 lib_name=libhdf5.dylib
 NPROC=$(sysctl -n hw.ncpu)
 
-if [ -f $HDF5_DIR/lib/$lib_name ]; then
+if [ -f ${HDF5_DIR}/lib/${lib_name} ]; then
     echo "using cached build"
     if [[ "$GITHUB_ENV" != "" ]]; then
         echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" | tee -a $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" | tee -a $GITHUB_ENV
     fi
     exit 0
 else
@@ -75,13 +81,6 @@ else
 fi
 
 brew install ninja cmake
-
-MINOR_V=${HDF5_VERSION#*.}
-MINOR_V=${MINOR_V%.*}
-MAJOR_V=${HDF5_VERSION/%.*.*}
-if [[ $MAJOR_V -gt 1 || $MINOR_V -ge 12 ]]; then
-    BUILD_MODE="--enable-build-mode=production"
-fi
 
 pushd ${PROJECT_PATH}
 
@@ -92,11 +91,10 @@ mkdir -p zlib-${ZLIB_VERSION}/build
 pushd zlib-${ZLIB_VERSION}/build
 cmake -G Ninja \
     -DCMAKE_INSTALL_PREFIX=${ZLIB_DIR} \
-    -DSKIP_INSTALL_FILES=ON \
     -DZLIB_BUILD_EXAMPLES=OFF \
     ..
 
-ninja
+ninja install
 popd
 
 curl -fsSLO "https://gitlab.dkrz.de/k202009/libaec/uploads/45b10e42123edd26ab7b3ad92bcf7be2/libaec-${LIBAEC_VERSION}.tar.gz"
@@ -112,20 +110,19 @@ cmake -G Ninja \
     -DBUILD_TESTING=OFF \
     ..
 
-ninja
+ninja install
 popd
 popd
 
-HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_PATCH_VERSION}.tar.gz"
 tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
 pushd hdf5-${HDF5_PATCH_VERSION}/build
-ls -lah ..
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_PREFIX_PATH=${PROJECT_PATH} \
+    -DZLIB_ROOT=${ZLIB_DIR} \
+    -Dlibaec_ROOT=${LIBAEC_DIR} \
     -DCMAKE_INSTALL_PREFIX=${HDF5_DIR} \
     -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
     -DHDF5_ENABLE_SZIP_SUPPORT=ON \
@@ -133,10 +130,8 @@ cmake -G Ninja \
     -DBUILD_TESTING=OFF \
     ..
 
-ninja
+ninja install
 popd
-
-LD_LIBRARY_PATH="${ZLIB_DIR}/lib:${LD_LIBRARY_PATH}"
 
 if [[ "$GITHUB_ENV" != "" ]]; then
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
