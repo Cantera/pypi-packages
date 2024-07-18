@@ -278,7 +278,7 @@ jobs:
           echo "Boost_ROOT='${{ steps.install-boost.outputs.BOOST_ROOT }}'" >> $GITHUB_ENV
           echo "HDF5_ROOT='${{ env.HDF5_DIR }}'"
           echo "CANTERA_TEST_DIR='${{ steps.download-test-files.outputs.test-root }}'" >> $GITHUB_ENV
-          echo "CIBW_BUILD='cp*-*'" >> $GITHUB_ENV
+          echo "CIBW_BUILD=cp*-*" >> $GITHUB_ENV
         if: runner.os == 'macOS'
 
       - name: Build wheels
