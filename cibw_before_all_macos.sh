@@ -88,7 +88,7 @@ curl -fsSLO "https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/z
 tar -xzf zlib-${ZLIB_VERSION}.tar.gz
 
 mkdir -p zlib-${ZLIB_VERSION}/build
-pushd zlib-${ ZLIB_VERSION }/build
+pushd zlib-${ZLIB_VERSION}/build
 cmake -G Ninja \
     -DCMAKE_INSTALL_PREFIX=${ZLIB_DIR} \
     -DSKIP_INSTALL_FILES=ON \
@@ -116,7 +116,7 @@ popd
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5.tar.gz"
 tar -xzf hdf5.tar.gz
 mkdir -p hdf5-${HDF5_VERSION}/build
-pushd hdf5-${ HDF5_VERSION }/build
+pushd hdf5-${HDF5_VERSION}/build
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
