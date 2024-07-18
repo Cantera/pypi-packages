@@ -333,7 +333,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: Boost_INCLUDE_DIRS="${{ steps.install-boost.outputs.BOOST_ROOT }}/include" HDF5_C_LIBRARIES=${{ runner.temp }}/cache/hdf5/lib CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET="10.14" Boost_INCLUDE_DIRS="${{ steps.install-boost.outputs.BOOST_ROOT }}/include" CMAKE_PREFIX_PATH="${{ runner.temp }}/cache" CT_SKIP_SLOW=1
           CIBW_BUILD: cp*-*
           CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
