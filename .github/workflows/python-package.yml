@@ -252,10 +252,12 @@ jobs:
         if: runner.os == 'Windows'
       - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
         if: runner.os == 'Windows'
-      - name: Flip slashes in BOOST_ROOT
+      - name: Set some environment variables
         run: |
           $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
           echo "BOOST_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          $CANTERA_TEST_DIR = "${{ runner.temp }}" -replace "\\", "/"
+          echo "CANTERA_TEST_DIR=$CANTERA_TEST_DIR" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: runner.os == 'Windows'
       - name: Build wheels
@@ -263,10 +265,9 @@ jobs:
         env:
           CIBW_ENVIRONMENT: Boost_INCLUDE_DIRS="${{ env.BOOST_ROOT }}/include" CT_SKIP_SLOW=1
           CIBW_ARCHS: "AMD64"
-          CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
           CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz && \
-            tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ env.CANTERA_TEST_DIR }}/cantera.tar.gz && \
+            tar -xzf ${{ env.CANTERA_TEST_DIR }}/cantera.tar.gz --strip-components=1 -C ${{ env.CANTERA_TEST_DIR }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
       - name: Archive the built wheels
         uses: actions/upload-artifact@v4
         with:
