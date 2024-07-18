@@ -188,9 +188,10 @@ jobs:
           name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
+        shell: bash
       - name: Download test files
         id: download-test-files
-        uses: ./.github/actions/download-cantera-test.yml
+        uses: ./.github/actions/download-cantera-test
         with:
           incoming-sha: ${{ needs.post-pending-status.outputs.incoming-sha }}
 
@@ -330,6 +331,7 @@ jobs:
           statuses = {
               "sdist": "${{needs.sdist.outputs.job-status}}",
               "wheels": "${{needs.build-wheels.outputs.job-status}}",
+              "publish": "${{needs.publish-files-to-pypi.outputs.job-status}}",
           }
           # This is a deliberate comparison to the empty string.
           if statuses["publish"] == "" and "${{ github.event.inputs.upload }}" == "false":
