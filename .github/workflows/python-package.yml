@@ -178,12 +178,15 @@ jobs:
           if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
           CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
           echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
+          if [[ "${{ matrix.arch }}" == "aarch64" ]]; then CIBW_CONTAINER_ENGINE="docker; create_args: --platform linux/arm64"; else CIBW_CONTAINER_ENGINE="docker"; fi
+          echo "CIBW_CONTAINER_ENGINE=${CIBW_CONTAINER_ENGINE}" | tee -a $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
           CIBW_ENVIRONMENT: CT_SKIP_SLOW=1
           CIBW_BUILD: ${{ env.CIBW_BUILD }}
           CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_CONTAINER_ENGINE: ${{ env.CIBW_CONTAINER_ENGINE }}
           # cibuildwheel on Linux uses a Docker container to run the build, so
           # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
           # we should be pretty safe to also use that.
