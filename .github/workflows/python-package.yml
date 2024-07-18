@@ -226,6 +226,7 @@ jobs:
             boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
+            arch: ${{ matrix.arch }}
 
       - name: Cache built libraries
         id: cache-built-libraries
