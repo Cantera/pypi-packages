@@ -143,8 +143,8 @@ jobs:
           echo -e '\n</details>\n' >> $GITHUB_STEP_SUMMARY
           echo ----- End of Metadata  -----
 
-  linux-wheel:
-    name: Build Linux_${{ matrix.arch }} for py${{ matrix.python || '-all' }}
+  build-wheels:
+    name: Build ${{ matrix.os }} ${{ matrix.arch }} for py${{ matrix.python || '-all' }}
     runs-on: ${{ matrix.os }}
     needs: ["sdist", "post-pending-status"]
     outputs:
@@ -159,130 +159,11 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
-      fail-fast: false
-    steps:
-      - name: Download pre-built sdist
-        uses: actions/download-artifact@v4
-        with:
-          name: cibw-sdist
-      - name: Extract the sdist tarball
-        run: tar -xvf *.tar.gz --strip-components=1
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-        if: matrix.arch != 'x86_64'
-      - name: Set some vars
-        run: |
-          PYTHON="${{ matrix.python }}"
-          if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
-          CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
-          echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
-          if [[ "${{ matrix.arch }}" == "aarch64" ]]; then CIBW_CONTAINER_ENGINE="docker; create_args: --platform linux/arm64"; else CIBW_CONTAINER_ENGINE="docker"; fi
-          echo "CIBW_CONTAINER_ENGINE=${CIBW_CONTAINER_ENGINE}" | tee -a $GITHUB_ENV
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.2
-        env:
-          CIBW_ENVIRONMENT: CT_SKIP_SLOW=1
-          CIBW_BUILD: ${{ env.CIBW_BUILD }}
-          CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_CONTAINER_ENGINE: ${{ env.CIBW_CONTAINER_ENGINE }}
-          # cibuildwheel on Linux uses a Docker container to run the build, so
-          # runner.temp is not available. cibuildwheel also uses the /tmp folder, so
-          # we should be pretty safe to also use that.
-          CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o /tmp/cantera.tar.gz \
-            && tar -xzf /tmp/cantera.tar.gz --strip-components=1 -C /tmp "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
-      - name: Archive the built wheels
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./wheelhouse/*.whl
-          name: cibw-wheels-${{ runner.os }}-${{ strategy.job-index }}
-
-  windows-wheel:
-    name: Build Windows Wheels
-    runs-on: windows-2022
-    needs: ["sdist", "post-pending-status"]
-    outputs:
-      job-status: ${{ job.status }}
-      fail-fast: false
-    strategy:
-      matrix:
-        include:
-        - os: windows-2022
-          arch: AMD64
-          boost-toolset: msvc
-          boost-platform-version: 2022
-          boost-version: "1.85.0"
-    steps:
-      - uses: actions/checkout@v4
-        name: Checkout the repository
-      - name: Download pre-built sdist
-        uses: actions/download-artifact@v4
-        with:
-          name: cibw-sdist
-      - name: Extract the sdist tarball
-        run: tar -xvf *.tar.gz --strip-components=1
-        shell: bash
-      - name: Install boost
-        uses: MarkusJx/install-boost@v2.4.5
-        id: install-boost
-        with:
-            # REQUIRED: Specify the required boost version
-            # A list of supported versions can be found here:
-            # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
-            boost_version: ${{ matrix.boost-version }}
-            # OPTIONAL: Specify a custon install location
-            boost_install_dir: ${{ runner.temp }}
-            toolset: ${{ matrix.boost-toolset }}
-            platform_version: ${{ matrix.boost-platform-version }}
-      # Cache HDF5
-      - name: Cache built HDF5
-        uses: actions/cache@v4
-        with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-0
-          path: ${{ runner.temp }}/cache/hdf5
-
-      # Windows HDF5
-      - uses: nuget/setup-nuget@v2
-        if: runner.os == 'Windows'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-        if: runner.os == 'Windows'
-      - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
-        if: runner.os == 'Windows'
-      - name: Set some environment variables
-        run: |
-          $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
-          echo "BOOST_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-          $CANTERA_TEST_DIR = "${{ runner.temp }}" -replace "\\", "/"
-          echo "CANTERA_TEST_DIR=$CANTERA_TEST_DIR" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-        shell: pwsh
-        if: runner.os == 'Windows'
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.2
-        env:
-          CIBW_ENVIRONMENT: Boost_INCLUDE_DIRS="${{ env.BOOST_ROOT }}/include" CT_SKIP_SLOW=1
-          CIBW_ARCHS: "AMD64"
-          CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ env.CANTERA_TEST_DIR }}/cantera.tar.gz && \
-            tar -xzf ${{ env.CANTERA_TEST_DIR }}/cantera.tar.gz --strip-components=1 -C ${{ env.CANTERA_TEST_DIR }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
-      - name: Archive the built wheels
-        uses: actions/upload-artifact@v4
-        with:
-          path: ./wheelhouse/*.whl
-          name: cibw-wheels-${{ runner.os }}-${{ strategy.job-index }}
-
-  macos-wheel:
-    name: Build ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    needs: ["sdist", "post-pending-status"]
-    outputs:
-      job-status: ${{ job.status }}
-    strategy:
-      matrix:
-        include:
+          - os: windows-2022
+            arch: AMD64
+            boost-toolset: msvc
+            boost-platform-version: 2022
+            boost-version: "1.85.0"
           - os: macos-14
             arch: aarch64
             boost-toolset: clang
@@ -299,29 +180,40 @@ jobs:
             boost-version: "1.85.0"
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout the repository
+      - name: Checkout the repository
+        uses: actions/checkout@v4
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
         with:
           name: cibw-sdist
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
-      # Cache HDF5
-      - name: Cache built HDF5
-        uses: actions/cache@v4
+      - name: Download test files
+        id: download-test-files
+        uses: ./.github/actions/download-cantera-test.yml
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-0
-          path: ${{ runner.temp }}/cache/hdf5
-      # macOS HDF5
-      - run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
-        if: runner.os == 'macOS'
-      # Hack for 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
-      - uses: actions/setup-python@v5
+          incoming-sha: ${{ needs.post-pending-status.outputs.incoming-sha }}
+
+      # Linux steps
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
         with:
-          python-version: 3.8
-        if: runner.os == 'macOS' && matrix.arch == 'aarch64'
+          platforms: all
+        if: matrix.arch != 'x86_64' && runner.os == 'Linux'
+      - name: Set up CIBW environment
+        run: |
+          PYTHON="${{ matrix.python }}"
+          if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
+          CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
+          echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
+          echo "CANTERA_TEST_DIR='/host/${{ steps.download-test-files.outputs.test-root }}'" | tee -a $GITHUB_ENV
+        if: runner.os == 'Linux'
+          # if [[ "${{ matrix.arch }}" == "aarch64" ]]; then CIBW_CONTAINER_ENGINE="docker; create_args: --platform linux/arm64"; else CIBW_CONTAINER_ENGINE="docker"; fi
+          # echo "CIBW_CONTAINER_ENGINE=${CIBW_CONTAINER_ENGINE}" | tee -a $GITHUB_ENV
+
       - name: Install boost
+        # Our custom manylinux images already have Boost installed
+        if: runner.os != 'Linux'
         uses: MarkusJx/install-boost@v2.4.5
         id: install-boost
         with:
@@ -333,16 +225,66 @@ jobs:
             boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
-            arch: ${{ matrix.arch }}
+
+      - name: Cache built libraries
+        id: cache-built-libraries
+        # Our custom manylinux images already have hdf5 installed
+        if: runner.os != 'Linux'
+        uses: actions/cache@v4
+        with:
+          key: ${{ matrix.os }}-${{ matrix.arch }}-0
+          path: ${{ runner.temp }}/cache
+          save-always: true
+
+      # Windows-only steps
+      - name: Set Up Nuget
+        uses: nuget/setup-nuget@v2
+        if: runner.os == 'Windows'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+        if: runner.os == 'Windows'
+      - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
+        if: runner.os == 'Windows'
+      - name: Set up CIBW environment
+        run: |
+          $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
+          echo "BOOST_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          $CANTERA_TEST_DIR = "${{ steps.download-test-files.outputs.test-root }}" -replace "\\", "/"
+          echo "CANTERA_TEST_DIR=$CANTERA_TEST_DIR" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          $CIBW_BUILD = "cp*-win64_amd64"
+          echo "CIBW_BUILD=$CIBW_BUILD" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+        shell: pwsh
+        if: runner.os == 'Windows'
+
+      # macOS-only steps
+      - name: Build required libraries
+        run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
+        if: runner.os == 'macOS'
+      # Hack for 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
+      - name: Hack for 3.8 bug
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.8
+        if: runner.os == 'macOS' && matrix.arch == 'aarch64'
+
+      - name: Set up CIBW environment
+        run: |
+          echo "MACOSX_DEPLOYMENT_TARGET='${{ env.MACOSX_DEPLOYMENT_TARGET }}'" >> $GITHUB_ENV
+          echo "Boost_ROOT='${{ steps.install-boost.outputs.BOOST_ROOT }}'" >> $GITHUB_ENV
+          echo "HDF5_ROOT='${{ env.HDF5_DIR }}'"
+          echo "CANTERA_TEST_DIR='${{ steps.download-test-files.outputs.test-root }}'" >> $GITHUB_ENV
+          echo "CIBW_BUILD='cp*-*'" >> $GITHUB_ENV
+        if: runner.os == 'macOS'
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.19.2
         env:
-          CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET="${{ env.MACOSX_DEPLOYMENT_TARGET }}" Boost_ROOT="${{ steps.install-boost.outputs.BOOST_ROOT }}" HDF5_ROOT=${{ env.HDF5_DIR }} CT_SKIP_SLOW=1
-          CIBW_BUILD: cp*-*
-          CIBW_TEST_COMMAND: pytest -vv --durations=100 ${{ runner.temp }}/test/python
-          CIBW_BEFORE_TEST: |
-            curl -sL "https://github.com/cantera/cantera/archive/${{ needs.post-pending-status.outputs.incoming-sha }}.tar.gz" -o ${{ runner.temp }}/cantera.tar.gz &&
-            tar -xzf ${{ runner.temp }}/cantera.tar.gz --strip-components=1 -C ${{ runner.temp }} "cantera-${{ needs.post-pending-status.outputs.incoming-sha }}/test"
+          CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}
+          CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 Boost_ROOT=${{ env.BOOST_ROOT }} CANTERA_TEST_DIR=${{ env.CANTERA_TEST_DIR }}
+          CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1 MACOSX_DEPLOYMENT_TARGET=${{ env.MACOSX_DEPLOYMENT_TARGET }} Boost_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} HDF5_DIR=${{ env.HDF5_DIR }} CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}
+          CIBW_BUILD: ${{ env.CIBW_BUILD }}
+          CIBW_ARCHS: ${{ matrix.arch }}
       - name: Archive the built wheels
         uses: actions/upload-artifact@v4
         with:
@@ -356,9 +298,7 @@ jobs:
       job-status: ${{ job.status }}
     needs:
       - "sdist"
-      - "linux-wheel"
-      - "windows-wheel"
-      - "macos-wheel"
+      - "build-wheels"
     if: github.event.inputs.upload == 'true'
     permissions:
       id-token: write
@@ -379,9 +319,7 @@ jobs:
     needs:
       - "post-pending-status"
       - "sdist"
-      - "linux-wheel"
-      - "windows-wheel"
-      - "macos-wheel"
+      - "build-wheels"
       - "publish-files-to-pypi"
     if: always()
     steps:
@@ -391,10 +329,7 @@ jobs:
           import os
           statuses = {
               "sdist": "${{needs.sdist.outputs.job-status}}",
-              "linux": "${{needs.linux-wheel.outputs.job-status}}",
-              "windows": "${{needs.windows-wheel.outputs.job-status}}",
-              "macos": "${{needs.macos-wheel.outputs.job-status}}",
-              "publish": "${{needs.publish-files-to-pypi.outputs.job-status}}",
+              "wheels": "${{needs.build-wheels.outputs.job-status}}",
           }
           # This is a deliberate comparison to the empty string.
           if statuses["publish"] == "" and "${{ github.event.inputs.upload }}" == "false":

@@ -79,7 +79,6 @@ else
 fi
 
 lib_name=libhdf5.dylib
-NPROC=$(sysctl -n hw.ncpu)
 
 if [ -f ${HDF5_DIR}/lib/${lib_name} ]; then
     echo "using cached build"
