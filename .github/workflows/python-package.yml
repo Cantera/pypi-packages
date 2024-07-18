@@ -161,18 +161,21 @@ jobs:
             arch: x86_64
           - os: windows-2022
             arch: AMD64
+            boost-arch: x86
             boost-toolset: msvc
             boost-platform-version: 2022
             boost-version: "1.85.0"
           - os: macos-14
-            arch: aarch64
+            arch: arm64
+            boost-arch: aarch64
             boost-toolset: clang
             # Since we only use the headers, we can use the platform version for this
             # macos version
             boost-platform-version: "14"
             boost-version: "1.85.0"
           - os: macos-13
-            arch: x86
+            arch: x86_64
+            boost-arch: x86
             boost-toolset: clang
             # Since we only use the headers, we can use the platform version for this
             # macos version
@@ -209,8 +212,6 @@ jobs:
           echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
           echo "CANTERA_TEST_DIR='/host/${{ steps.download-test-files.outputs.test-root }}'" | tee -a $GITHUB_ENV
         if: runner.os == 'Linux'
-          # if [[ "${{ matrix.arch }}" == "aarch64" ]]; then CIBW_CONTAINER_ENGINE="docker; create_args: --platform linux/arm64"; else CIBW_CONTAINER_ENGINE="docker"; fi
-          # echo "CIBW_CONTAINER_ENGINE=${CIBW_CONTAINER_ENGINE}" | tee -a $GITHUB_ENV
 
       - name: Install boost
         # Our custom manylinux images already have Boost installed
@@ -226,7 +227,7 @@ jobs:
             boost_install_dir: ${{ runner.temp }}
             toolset: ${{ matrix.boost-toolset }}
             platform_version: ${{ matrix.boost-platform-version }}
-            arch: ${{ matrix.arch }}
+            arch: ${{ matrix.boost-arch }}
 
       - name: Cache built libraries
         id: cache-built-libraries
