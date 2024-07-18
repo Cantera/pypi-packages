@@ -116,10 +116,11 @@ ninja
 popd
 popd
 
-curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5.tar.gz"
-tar -xzf hdf5.tar.gz
-mkdir -p hdf5-${HDF5_VERSION}/build
-pushd hdf5-${HDF5_VERSION}/build
+HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
+curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_PATCH_VERSION}.tar.gz"
+tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
+mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
+pushd hdf5-${HDF5_PATCH_VERSION}/build
 ls -lah ..
 
 cmake -G Ninja \
