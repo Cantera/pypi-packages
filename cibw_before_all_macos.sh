@@ -32,6 +32,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set -eo pipefail
+
+function setup_github_env {
+    if [[ "$GITHUB_ENV" != "" ]]; then
+        echo "HDF5_DIR=${HDF5_DIR}" | tee -a $GITHUB_ENV
+        echo "LIBAEC_DIR=${LIBAEC_DIR}" | tee -a $GITHUB_ENV
+        echo "ZLIB_DIR=${ZLIB_DIR}" | tee -a $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" | tee -a $GITHUB_ENV
+        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
+        echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${ZLIB_DIR}/lib:${LIBAEC_DIR}/lib" | tee -a $GITHUB_ENV
+    fi
+}
+
 set +x
 
 if [[ "$1" == "" ]] ; then
@@ -71,10 +83,7 @@ NPROC=$(sysctl -n hw.ncpu)
 
 if [ -f ${HDF5_DIR}/lib/${lib_name} ]; then
     echo "using cached build"
-    if [[ "$GITHUB_ENV" != "" ]]; then
-        echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" | tee -a $GITHUB_ENV
-    fi
+    setup_github_env
     exit 0
 else
     echo "building HDF5"
@@ -133,9 +142,6 @@ cmake -G Ninja \
 ninja install
 popd
 
-if [[ "$GITHUB_ENV" != "" ]]; then
-    echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
-    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" | tee -a $GITHUB_ENV
-fi
+setup_github_env
 
 set -x
