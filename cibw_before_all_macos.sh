@@ -32,6 +32,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set -eo pipefail
+set +x
 
 if [[ "$1" == "" ]] ; then
     echo "Usage: $0 <PROJECT_PATH>"
@@ -119,6 +120,7 @@ curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERS
 tar -xzf hdf5.tar.gz
 mkdir -p hdf5-${HDF5_VERSION}/build
 pushd hdf5-${HDF5_VERSION}/build
+ls -lah ..
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -139,3 +141,5 @@ if [[ "$GITHUB_ENV" != "" ]]; then
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
     echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" | tee -a $GITHUB_ENV
 fi
+
+set -x
