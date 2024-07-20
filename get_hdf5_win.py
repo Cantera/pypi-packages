@@ -86,7 +86,7 @@ VSVERSION_TO_GENERATOR = {
 def get_dashed_version(version):
     dotted_version = version
     if len(version.split(".")) > 3:
-        dashed_version = "-".join(version.rsplit(".", maxplit=1))
+        dashed_version = "-".join(version.rsplit(".", maxsplit=1))
     else:
         dashed_version = version
     return {"dotted_version": dotted_version, "dashed_version": dashed_version}
