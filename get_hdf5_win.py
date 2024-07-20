@@ -47,7 +47,7 @@ from subprocess import run
 from zipfile import ZipFile
 import requests
 
-HDF5_URL = "https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-{series}/hdf5-{version}/src/hdf5-{version}.zip"
+HDF5_URL = "https://github.com/HDFGroup/hdf5/releases/download/hdf5_{dotted_version}/hdf5-{dashed_version}.zip"
 ZLIB_ROOT = environ.get('ZLIB_ROOT')
 
 CMAKE_CONFIGURE_CMD = [
@@ -67,7 +67,7 @@ CMAKE_INSTALL_ARG = ["--target", "install", '--config', 'Release']
 CMAKE_INSTALL_PATH_ARG = "-DCMAKE_INSTALL_PREFIX={install_path}"
 CMAKE_HDF5_LIBRARY_PREFIX = ["-DHDF5_EXTERNAL_LIB_PREFIX=h5py_"]
 REL_PATH_TO_CMAKE_CFG = "hdf5-{version}"
-DEFAULT_VERSION = '1.12.2'
+DEFAULT_VERSION = '1.14.3.3'
 VSVERSION_TO_GENERATOR = {
     "9": "Visual Studio 9 2008",
     "10": "Visual Studio 10 2010",
@@ -83,9 +83,17 @@ VSVERSION_TO_GENERATOR = {
 }
 
 
+def get_dashed_version(version):
+    dotted_version = version
+    if len(version.split(".")) > 3:
+        dashed_version = "-".join(version.rsplit(".", maxplit=1))
+    else:
+        dashed_version = version
+    return {"dotted_version": dotted_version, "dashed_version": dashed_version}
+
+
 def download_hdf5(version, outfile):
-    series = '.'.join(version.split(".")[:2])
-    file = HDF5_URL.format(version=version, series=series)
+    file = HDF5_URL.format(**get_dashed_version(version))
 
     print("Downloading " + file, file=stderr)
     r = requests.get(file, stream=True)
@@ -102,6 +110,7 @@ def download_hdf5(version, outfile):
 
 
 def build_hdf5(version, hdf5_file, install_path, cmake_generator, use_prefix):
+    versions = get_dashed_version(version)
     try:
         with TemporaryDirectory() as hdf5_extract_path:
             generator_args = (
@@ -119,22 +128,20 @@ def build_hdf5(version, hdf5_file, install_path, cmake_generator, use_prefix):
                 chdir(new_dir)
                 cfg_cmd = CMAKE_CONFIGURE_CMD + [
                     get_cmake_install_path(install_path),
-                    get_cmake_config_path(version, hdf5_extract_path),
+                    get_cmake_config_path(versions["dashed_version"], hdf5_extract_path),
                 ] + generator_args + prefix_args
-                print("Configuring HDF5 version {version}...".format(version=version))
+                print(f"Configuring HDF5 version {versions["dotted_version"]}...")
                 print(' '.join(cfg_cmd), file=stderr)
                 run(cfg_cmd, check=True)
 
                 build_cmd = CMAKE_BUILD_CMD + [
                     '.',
                 ] + CMAKE_INSTALL_ARG
-                print("Building HDF5 version {version}...".format(version=version))
+                print(f"Building HDF5 version {version}...")
                 print(' '.join(build_cmd), file=stderr)
                 run(build_cmd, check=True)
 
-                print("Installed HDF5 version {version} to {install_path}".format(
-                    version=version, install_path=install_path,
-                ), file=stderr)
+                print(f"Installed HDF5 version {version} to {install_path}", file=stderr)
                 chdir(old_dir)
     except OSError as e:
         if e.winerror == 145:
