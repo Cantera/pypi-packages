@@ -268,7 +268,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.8
-        if: runner.os == 'macOS' && matrix.arch == 'aarch64'
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
 
       - name: Set up CIBW environment
         run: |
