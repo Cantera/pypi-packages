@@ -212,7 +212,6 @@ jobs:
           if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
           CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
           echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
-          echo "CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}" | tee -a $GITHUB_ENV
         if: runner.os == 'Linux'
 
       - name: Install boost
@@ -253,7 +252,7 @@ jobs:
       - name: Set up CIBW environment
         run: |
           $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
-          echo "BOOST_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "Boost_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
           echo "CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
           echo "CIBW_BUILD=cp*-*" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
@@ -272,9 +271,7 @@ jobs:
 
       - name: Set up CIBW environment
         run: |
-          echo "MACOSX_DEPLOYMENT_TARGET=${{ env.MACOSX_DEPLOYMENT_TARGET }}" >> $GITHUB_ENV
           echo "Boost_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }}" >> $GITHUB_ENV
-          echo "HDF5_ROOT=${{ env.HDF5_DIR }}"
           echo "CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}" >> $GITHUB_ENV
           echo "CIBW_BUILD=cp*-*" >> $GITHUB_ENV
         if: runner.os == 'macOS'
@@ -283,8 +280,8 @@ jobs:
         uses: pypa/cibuildwheel@v2.19.2
         env:
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}
-          CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 Boost_ROOT=${{ env.BOOST_ROOT }} CANTERA_TEST_DIR=${{ env.CANTERA_TEST_DIR }}
-          CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1 MACOSX_DEPLOYMENT_TARGET=${{ env.MACOSX_DEPLOYMENT_TARGET }} Boost_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} HDF5_DIR=${{ env.HDF5_DIR }} CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}
+          CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1
+          CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
           CIBW_BUILD: ${{ env.CIBW_BUILD }}
           CIBW_ARCHS: ${{ matrix.arch }}
       - name: Archive the built wheels
