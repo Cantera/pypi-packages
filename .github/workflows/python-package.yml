@@ -250,6 +250,9 @@ jobs:
       - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
         if: runner.os == 'Windows'
       - name: Set up CIBW environment
+        # On Windows, Boost_ROOT needs to have \ replaced by / because that's what
+        # cibuildwheel says. CANTERA_TEST_DIR doesn't need the replacement because
+        # it will be substituted in a cmd or pwsh session.
         run: |
           $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
           echo "Boost_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
@@ -262,7 +265,7 @@ jobs:
       - name: Build required libraries
         run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
         if: runner.os == 'macOS'
-      # Hack for 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
+      # Force installation to resolve Python 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
       - name: Hack for 3.8 bug
         uses: actions/setup-python@v5
         with:
