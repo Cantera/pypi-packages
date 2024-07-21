@@ -63,4 +63,6 @@ if [[ "$GITHUB_ENV" != "" ]] ; then
     echo "LINK=$LINK" | tee -a $GITHUB_ENV
     echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
+    echo "HDF5_LIB_DIR=${HDF5_DIR}\lib" | tee -a $GITHUB_ENV
+    echo "ZLIB_LIB_DIR=${ZLIB_ROOT}\bin_release" | tee -a $GITHUB_ENV
 fi
