@@ -1,0 +1,43 @@
+name: "Download Cantera Test Files"
+description: "Download and cache Cantera's Python test suite"
+inputs:
+  incoming-sha:
+    description: The hash of the commit that should be downloaded
+    required: true
+outputs:
+  test-root:
+    description: The root folder where the tests are located
+    value: ${{ steps.set-output.outputs.DESTINATION_PATH }}
+
+runs:
+  using: "composite"
+  steps:
+  - name: Sanitize the destination path
+    run: |
+      $DESTINATION_PATH = "${{ runner.temp }}" -replace "\\", "/"
+      echo "DESTINATION_PATH=$DESTINATION_PATH" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+    if: runner.os == 'Windows'
+    shell: pwsh
+  - name: Sanitize the destination path
+    run: echo "DESTINATION_PATH=${{ runner.temp }}" >> $GITHUB_ENV
+    shell: bash
+    if: runner.os != 'Windows'
+  - name: Set the outputs
+    id: set-output
+    run: echo "DESTINATION_PATH=${{ env.DESTINATION_PATH }}" >> $GITHUB_OUTPUT
+    shell: bash
+  - name: Download and unpack the tarball
+    if: steps.restore-cache.outputs.cache-hit != 'true'
+    run: |
+      curl -fsSL "https://github.com/cantera/cantera/archive/${{ inputs.incoming-sha }}.tar.gz" -o cantera.tar.gz
+      tar -xzf cantera.tar.gz --strip-components=1 "cantera-${{ inputs.incoming-sha }}/test"
+      rm cantera.tar.gz
+    shell: bash
+    working-directory: ${{ steps.set-output.outputs.DESTINATION_PATH }}
+  - name: Save the test file cache
+    uses: actions/cache/save@v4
+    if: always() && steps.restore-cache.outputs.cache-hit != true
+    id: save-cache
+    with:
+      path: ${{ steps.set-output.outputs.DESTINATION_PATH }}/test
+      key: ${{ steps.restore-cache.outputs.cache-primary-key }}
