@@ -26,13 +26,6 @@ runs:
     id: set-output
     run: echo "DESTINATION_PATH=${{ env.DESTINATION_PATH }}" >> $GITHUB_OUTPUT
     shell: bash
-  - name: Restore cached the test files
-    uses: actions/cache/restore@v4
-    id: restore-cache
-    with:
-      path: ${{ steps.set-output.outputs.DESTINATION_PATH }}/test
-      # Bump the integer to bust the cache
-      key: ${{ inputs.incoming-sha }}-0
   - name: Download and unpack the tarball
     if: steps.restore-cache.outputs.cache-hit != 'true'
     run: |
