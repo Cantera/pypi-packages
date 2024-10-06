@@ -24,7 +24,7 @@ env:
 jobs:
   dump:
     name: Dump the input parameters for the workflow
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Dump Event Payload
         run: jq . "$GITHUB_EVENT_PATH"
@@ -35,7 +35,7 @@ jobs:
 
   post-pending-status:
     name: Post a pending workflow status to Cantera/cantera
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
     outputs:
@@ -97,7 +97,7 @@ jobs:
 
   sdist:
     name: Build the sdist
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - "post-pending-status"
     outputs:
@@ -280,7 +280,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.19.2
+        uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 CMAKE_BUILD_PARALLEL_LEVEL=4
