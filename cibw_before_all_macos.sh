@@ -55,9 +55,9 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
 
 ZLIB_VERSION="1.3.1"
-LIBAEC_VERSION="1.0.6"
+LIBAEC_VERSION="1.1.3"
 
-HDF5_VERSION="1.14.4.3"
+HDF5_VERSION="1.14.5"
 # Replace the last dot with a dash because that's what some of the files in this
 # release have done.
 HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
