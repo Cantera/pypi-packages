@@ -56,11 +56,13 @@ HDF5_VERSION="1.14.5"
 ZLIB_VERSION="1.3.1"
 LIBAEC_VERSION="1.1.3"
 HDF5_PATCH_VERSION=${HDF5_VERSION}
+HIGHFIVE_VERSION="2.10.0"
 # Replace the last dot with a dash because that's what some of the files in this
 # release have done.
 # HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
+HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
@@ -109,6 +111,23 @@ cmake -G Ninja --log-level verbose \
     -DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v${LIBAEC_VERSION} \
     -DLIBAEC_USE_LOCALCONTENT:BOOL=OFF \
     -DHDF_PACKAGE_NAMESPACE:STRING=ct_ \
+    ..
+
+ninja install
+popd
+
+curl -fsSLO https://github.com/BlueBrain/HighFive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
+tar -xzf v${HIGHFIVE_VERSION}.tar.gz
+mkdir -p v${HIGHFIVE_VERSION}/build
+pushd v${HIGHFIVE_VERSION}/build
+
+cmake -G Ninja --log-level verbose \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=${HIGHFIVE_DIR} \
+    -DHIGHFIVE_USE_BOOST:BOOL=ON \
+    -DHIGHFIVE_UNIT_TESTS:BOOL=OFF \
+    -DHIGHFIVE_EXAMPLES:BOOL=OFF \
+    -DHIGHFIVE_BUILD_DOCS:BOOL=OFF \
     ..
 
 ninja install
