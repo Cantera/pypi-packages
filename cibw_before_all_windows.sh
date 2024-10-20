@@ -39,11 +39,16 @@ if [[ "$1" == "" ]] ; then
 fi
 PROJECT_PATH="$1"
 
+# nuget
+nuget install zlib-msvc-x64 -ExcludeVersion -OutputDirectory "$PROJECT_PATH"
+EXTRA_PATH="$PROJECT_PATH\zlib-msvc-x64\build\native\bin_release"
+export PATH="$PATH:$EXTRA_PATH"
+export CL="/I$PROJECT_PATH\zlib-msvc-x64\build\native\include"
+export LINK="/LIBPATH:$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
+export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native"
+
 # HDF5
 export HDF5_VERSION="1.14.5"
-export ZLIB_VERSION="1.3.1"
-export LIBAEC_VERSION="1.1.3"
-export HDF5_USE_PREFIX="1"
 export HDF5_VSVERSION="17-64"
 export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION"
 
@@ -54,6 +59,10 @@ python $SCRIPT_DIR/get_hdf5_win.py
 if [[ "$GITHUB_ENV" != "" ]] ; then
     # PATH on windows is special
     echo "$EXTRA_PATH" | tee -a $GITHUB_PATH
+    echo "CL=$CL" | tee -a $GITHUB_ENV
+    echo "LINK=$LINK" | tee -a $GITHUB_ENV
+    echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
     echo "HDF5_LIB_DIR=${HDF5_DIR}\lib" | tee -a $GITHUB_ENV
+    echo "ZLIB_LIB_DIR=${ZLIB_ROOT}\bin_release" | tee -a $GITHUB_ENV
 fi
