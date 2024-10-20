@@ -36,11 +36,9 @@ set -eo pipefail
 function setup_github_env {
     if [[ "$GITHUB_ENV" != "" ]]; then
         echo "HDF5_DIR=${HDF5_DIR}" | tee -a $GITHUB_ENV
-        echo "LIBAEC_DIR=${LIBAEC_DIR}" | tee -a $GITHUB_ENV
-        echo "ZLIB_DIR=${ZLIB_DIR}" | tee -a $GITHUB_ENV
         echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" | tee -a $GITHUB_ENV
         echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-        echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${ZLIB_DIR}/lib:${LIBAEC_DIR}/lib" | tee -a $GITHUB_ENV
+        echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
     fi
 }
 
@@ -54,19 +52,15 @@ PROJECT_PATH="$1"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
 
-ZLIB_VERSION="1.3.1"
-LIBAEC_VERSION="1.0.6"
-
-HDF5_VERSION="1.14.4.3"
+HDF5_VERSION="1.14.5"
+ZLIB_VERSION="1.3"
+LIBAEC_VERSION="1.1.3"
+HDF5_PATCH_VERSION=${HDF5_VERSION}
 # Replace the last dot with a dash because that's what some of the files in this
 # release have done.
-HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
+# HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
-ZLIB_DIR="${PROJECT_PATH}/cache/zlib/${ZLIB_VERSION}-${ARCH}"
-LIBAEC_DIR="${PROJECT_PATH}/cache/libaec/${LIBAEC_VERSION}-${ARCH}"
-
-LD_LIBRARY_PATH="${ZLIB_DIR}/lib:${LD_LIBRARY_PATH}"
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
@@ -92,36 +86,6 @@ brew install ninja cmake
 
 pushd ${PROJECT_PATH}
 
-curl -fsSLO "https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zlib-${ZLIB_VERSION}.tar.gz"
-tar -xzf zlib-${ZLIB_VERSION}.tar.gz
-
-mkdir -p zlib-${ZLIB_VERSION}/build
-pushd zlib-${ZLIB_VERSION}/build
-cmake -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=${ZLIB_DIR} \
-    -DZLIB_BUILD_EXAMPLES=OFF \
-    ..
-
-ninja install
-popd
-
-curl -fsSLO "https://gitlab.dkrz.de/k202009/libaec/uploads/45b10e42123edd26ab7b3ad92bcf7be2/libaec-${LIBAEC_VERSION}.tar.gz"
-tar -xzf libaec-${LIBAEC_VERSION}.tar.gz
-mkdir -p libaec-${LIBAEC_VERSION}/build
-pushd libaec-${LIBAEC_VERSION}
-patch -p0 < ${SCRIPT_DIR}/libaec_cmakelists.patch
-pushd build
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${LIBAEC_DIR} \
-    -DBUILD_TESTING=OFF \
-    ..
-
-ninja install
-popd
-popd
-
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_PATCH_VERSION}.tar.gz"
 tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
@@ -129,13 +93,22 @@ pushd hdf5-${HDF5_PATCH_VERSION}/build
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DZLIB_ROOT=${ZLIB_DIR} \
-    -Dlibaec_ROOT=${LIBAEC_DIR} \
-    -DCMAKE_INSTALL_PREFIX=${HDF5_DIR} \
-    -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
-    -DHDF5_ENABLE_SZIP_SUPPORT=ON \
-    -DHDF5_BUILD_EXAMPLES=OFF \
-    -DBUILD_TESTING=OFF \
+    -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
+    -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
+    -DHDF5_BUILD_EXAMPLES:BOOL=OFF \
+    -DHDF5_BUILD_TOOLS:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DHDF5_ALLOW_EXTERNAL_SUPPORT:STRING=TGZ \
+    -DZLIB_PACKAGE_NAME:STRING=zlib \
+    -DZLIB_TGZ_NAME:STRING=zlib-${ZLIB_VERSION}.tar.gz \
+    -DZLIB_TGZ_ORIGPATH:STRING=https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION} \
+    -DZLIB_USE_LOCALCONTENT:BOOL=OFF \
+    -DLIBAEC_PACKAGE_NAME:STRING=libaec \
+    -DLIBAEC_TGZ_NAME:STRING=libaec-${LIBAEC_VERSION}.tar.gz \
+    -DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v${LIBAEC_VERSION} \
+    -DLIBAEC_USE_LOCALCONTENT:BOOL=OFF \
+    -DHDF5_USE_ZLIB_STATIC:BOOL=ON \
+    -DHDF5_USE_LIBAEC_STATIC:BOOL=ON \
     ..
 
 ninja install
