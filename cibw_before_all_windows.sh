@@ -39,16 +39,11 @@ if [[ "$1" == "" ]] ; then
 fi
 PROJECT_PATH="$1"
 
-# nuget
-nuget install zlib-msvc-x64 -ExcludeVersion -OutputDirectory "$PROJECT_PATH"
-EXTRA_PATH="$PROJECT_PATH\zlib-msvc-x64\build\native\bin_release"
-export PATH="$PATH:$EXTRA_PATH"
-export CL="/I$PROJECT_PATH\zlib-msvc-x64\build\native\include"
-export LINK="/LIBPATH:$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
-export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native"
-
 # HDF5
-export HDF5_VERSION="1.14.4.3"
+export HDF5_VERSION="1.14.5"
+export ZLIB_VERSION="1.3"
+export LIBAEC_VERSION="1.1.3"
+export HDF5_USE_PREFIX="1"
 export HDF5_VSVERSION="17-64"
 export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION"
 

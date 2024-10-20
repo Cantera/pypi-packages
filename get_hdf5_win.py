@@ -48,7 +48,8 @@ from zipfile import ZipFile
 import requests
 
 HDF5_URL = "https://github.com/HDFGroup/hdf5/releases/download/hdf5_{dotted_version}/hdf5-{dashed_version}.zip"
-ZLIB_ROOT = environ.get("ZLIB_ROOT")
+ZLIB_VERSION = environ["ZLIB_VERSION"]
+LIBAEC_VERSION = environ["LIBAEC_VERSION"]
 
 CMAKE_CONFIGURE_CMD = [
     "cmake",
@@ -58,20 +59,25 @@ CMAKE_CONFIGURE_CMD = [
     "-DHDF5_BUILD_HL_LIB=ON",
     "-DHDF5_BUILD_TOOLS:BOOL=OFF",
     "-DBUILD_TESTING:BOOL=OFF",
+    "-DHDF5_BUILD_EXAMPLES:BOOL=OFF",
+    "-DHDF5_ENABLE_Z_LIB_SUPPORT=ON",
+    "-DHDF5_ENABLE_SZIP_SUPPORT=ON",
+    "-DHDF5_ALLOW_EXTERNAL_SUPPORT:STRING=TGZ",
+    "-DZLIB_PACKAGE_NAME:STRING=zlib",
+    f"-DZLIB_TGZ_NAME:STRING=zlib-${ZLIB_VERSION}.tar.gz",
+    f"-DZLIB_TGZ_ORIGPATH:STRING=https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}",
+    "-DZLIB_USE_LOCALCONTENT:BOOL=OFF",
+    "-DLIBAEC_PACKAGE_NAME:STRING=libaec",
+    f"-DLIBAEC_TGZ_NAME:STRING=libaec-${LIBAEC_VERSION}.tar.gz",
+    f"-DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v${LIBAEC_VERSION}",
+    "-DLIBAEC_USE_LOCALCONTENT:BOOL=OFF",
 ]
-if ZLIB_ROOT:
-    CMAKE_CONFIGURE_CMD += [
-        "-DHDF5_ENABLE_Z_LIB_SUPPORT=ON",
-        f"-DZLIB_INCLUDE_DIR={ZLIB_ROOT}\\include",
-        f"-DZLIB_LIBRARY_RELEASE={ZLIB_ROOT}\\lib_release\\zlib.lib",
-        f"-DZLIB_LIBRARY_DEBUG={ZLIB_ROOT}\\lib_debug\\zlibd.lib",
-    ]
 CMAKE_BUILD_CMD = ["cmake", "--build"]
 CMAKE_INSTALL_ARG = ["--target", "install", "--config", "Release"]
 CMAKE_INSTALL_PATH_ARG = "-DCMAKE_INSTALL_PREFIX={install_path}"
-CMAKE_HDF5_LIBRARY_PREFIX = ["-DHDF5_EXTERNAL_LIB_PREFIX=h5py_"]
+CMAKE_HDF5_LIBRARY_PREFIX = ["-DHDF5_EXTERNAL_LIB_PREFIX=ct_"]
 REL_PATH_TO_CMAKE_CFG = "hdf5-{version}"
-DEFAULT_VERSION = "1.14.3.3"
+DEFAULT_VERSION = "1.14.5"
 VSVERSION_TO_GENERATOR = {
     "9": "Visual Studio 9 2008",
     "10": "Visual Studio 10 2010",
@@ -190,7 +196,7 @@ def main():
     install_path = environ.get("HDF5_DIR")
     version = environ.get("HDF5_VERSION", DEFAULT_VERSION)
     vs_version = environ.get("HDF5_VSVERSION")
-    use_prefix = True if environ.get("H5PY_USE_PREFIX") is not None else False
+    use_prefix = True if environ.get("HDF5_USE_PREFIX") is not None else False
 
     if install_path is not None:
         if not exists(install_path):
