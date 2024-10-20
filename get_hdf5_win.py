@@ -56,7 +56,7 @@ CMAKE_CONFIGURE_CMD = [
     "-DBUILD_SHARED_LIBS:BOOL=ON",
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE",
     "-DHDF5_BUILD_CPP_LIB=OFF",
-    "-DHDF5_BUILD_HL_LIB=ON",
+    "-DHDF5_BUILD_HL_LIB=OFF",
     "-DHDF5_BUILD_TOOLS:BOOL=OFF",
     "-DBUILD_TESTING:BOOL=OFF",
     "-DHDF5_BUILD_EXAMPLES:BOOL=OFF",
@@ -214,7 +214,7 @@ def main():
         print("using cached hdf5", file=stderr)
     if install_path is not None:
         print("hdf5 files: ", file=stderr)
-        for dirpath, dirnames, filenames in walk(install_path):
+        for dirpath, _, filenames in walk(install_path):
             for file in filenames:
                 print(" * " + pjoin(dirpath, file))
 

@@ -41,7 +41,7 @@ PROJECT_PATH="$1"
 
 # HDF5
 export HDF5_VERSION="1.14.5"
-export ZLIB_VERSION="1.3"
+export ZLIB_VERSION="1.3.1"
 export LIBAEC_VERSION="1.1.3"
 export HDF5_USE_PREFIX="1"
 export HDF5_VSVERSION="17-64"
@@ -54,10 +54,6 @@ python $SCRIPT_DIR/get_hdf5_win.py
 if [[ "$GITHUB_ENV" != "" ]] ; then
     # PATH on windows is special
     echo "$EXTRA_PATH" | tee -a $GITHUB_PATH
-    echo "CL=$CL" | tee -a $GITHUB_ENV
-    echo "LINK=$LINK" | tee -a $GITHUB_ENV
-    echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
     echo "HDF5_LIB_DIR=${HDF5_DIR}\lib" | tee -a $GITHUB_ENV
-    echo "ZLIB_LIB_DIR=${ZLIB_ROOT}\bin_release" | tee -a $GITHUB_ENV
 fi
