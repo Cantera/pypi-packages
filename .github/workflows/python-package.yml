@@ -166,7 +166,7 @@ jobs:
             boost-arch: x86
             boost-toolset: msvc
             boost-platform-version: 2022
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
           - os: macos-14
             arch: arm64
             boost-arch: aarch64
@@ -174,7 +174,7 @@ jobs:
             # Since we only use the headers, we can use the platform version for this
             # macos version
             boost-platform-version: "14"
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
           - os: macos-13
             arch: x86_64
             boost-arch: x86
@@ -182,7 +182,7 @@ jobs:
             # Since we only use the headers, we can use the platform version for this
             # macos version
             boost-platform-version: "13"
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
       fail-fast: false
     steps:
       - name: Checkout the repository
