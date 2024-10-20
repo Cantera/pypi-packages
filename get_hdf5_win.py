@@ -64,12 +64,12 @@ CMAKE_CONFIGURE_CMD = [
     "-DHDF5_ENABLE_SZIP_SUPPORT=ON",
     "-DHDF5_ALLOW_EXTERNAL_SUPPORT:STRING=TGZ",
     "-DZLIB_PACKAGE_NAME:STRING=zlib",
-    f"-DZLIB_TGZ_NAME:STRING=zlib-${ZLIB_VERSION}.tar.gz",
-    f"-DZLIB_TGZ_ORIGPATH:STRING=https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}",
+    f"-DZLIB_TGZ_NAME:STRING=zlib-{ZLIB_VERSION}.tar.gz",
+    f"-DZLIB_TGZ_ORIGPATH:STRING=https://github.com/madler/zlib/releases/download/v{ZLIB_VERSION}",
     "-DZLIB_USE_LOCALCONTENT:BOOL=OFF",
     "-DLIBAEC_PACKAGE_NAME:STRING=libaec",
-    f"-DLIBAEC_TGZ_NAME:STRING=libaec-${LIBAEC_VERSION}.tar.gz",
-    f"-DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v${LIBAEC_VERSION}",
+    f"-DLIBAEC_TGZ_NAME:STRING=libaec-{LIBAEC_VERSION}.tar.gz",
+    f"-DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v{LIBAEC_VERSION}",
     "-DLIBAEC_USE_LOCALCONTENT:BOOL=OFF",
 ]
 CMAKE_BUILD_CMD = ["cmake", "--build"]
