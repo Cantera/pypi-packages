@@ -118,8 +118,8 @@ popd
 
 curl -fsSLO https://github.com/BlueBrain/HighFive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
 tar -xzf v${HIGHFIVE_VERSION}.tar.gz
-mkdir -p v${HIGHFIVE_VERSION}/build
-pushd v${HIGHFIVE_VERSION}/build
+mkdir -p HighFive-${HIGHFIVE_VERSION}/build
+pushd HighFive-${HIGHFIVE_VERSION}/build
 
 cmake -G Ninja --log-level verbose \
     -DCMAKE_BUILD_TYPE=Release \
