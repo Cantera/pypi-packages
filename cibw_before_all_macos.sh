@@ -49,7 +49,6 @@ if [[ "$1" == "" ]] ; then
     exit 1
 fi
 PROJECT_PATH="$1"
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
 
 HDF5_VERSION="1.14.5"
@@ -75,8 +74,9 @@ else
 fi
 
 lib_name=libhdf5.dylib
+inc_name=highfive.hpp
 
-if [ -f ${HDF5_DIR}/lib/${lib_name} ]; then
+if [ -f ${HDF5_DIR}/lib/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/${inc_name} ]; then
     echo "using cached build"
     setup_github_env
     exit 0
@@ -93,7 +93,7 @@ tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
 pushd hdf5-${HDF5_PATCH_VERSION}/build
 
-cmake -G Ninja --log-level verbose \
+cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=${HDF5_DIR} \
     -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
@@ -121,10 +121,11 @@ tar -xzf v${HIGHFIVE_VERSION}.tar.gz
 mkdir -p HighFive-${HIGHFIVE_VERSION}/build
 pushd HighFive-${HIGHFIVE_VERSION}/build
 
-cmake -G Ninja --log-level verbose \
+cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DHDF5_ROOT=${HDF5_DIR} \
     -DCMAKE_INSTALL_PREFIX=${HIGHFIVE_DIR} \
-    -DHIGHFIVE_USE_BOOST:BOOL=ON \
+    -DHIGHFIVE_USE_BOOST:BOOL=OFF \
     -DHIGHFIVE_UNIT_TESTS:BOOL=OFF \
     -DHIGHFIVE_EXAMPLES:BOOL=OFF \
     -DHIGHFIVE_BUILD_DOCS:BOOL=OFF \

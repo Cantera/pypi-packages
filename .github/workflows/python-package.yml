@@ -236,8 +236,8 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-0
-          path: ${{ runner.temp }}/cache
+          key: ${{ matrix.os }}-${{ matrix.arch }}-1
+          path: ${{ github.workspace }}/cache
 
       # Windows-only steps
       - name: Set Up Nuget
@@ -247,7 +247,8 @@ jobs:
         with:
           python-version: 3.12
         if: runner.os == 'Windows'
-      - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
+      - name: Build required libraries
+        run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
         if: runner.os == 'Windows'
       - name: Set up CIBW environment
         # On Windows, Boost_ROOT needs to have \ replaced by / because that's what
@@ -263,7 +264,7 @@ jobs:
 
       # macOS-only steps
       - name: Build required libraries
-        run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
+        run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
         if: runner.os == 'macOS'
       # Force installation to resolve Python 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
       - name: Hack for 3.8 bug
