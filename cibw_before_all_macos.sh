@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copied from h5py. Licensed under the BSD 3-Clause license.
+# Adapted from h5py. Licensed under the BSD 3-Clause license.
 # Copyright (c) 2008 Andrew Collette and contributors
 # All rights reserved.
 
@@ -54,18 +54,14 @@ ARCH=$(uname -m)
 HDF5_VERSION="1.14.5"
 ZLIB_VERSION="1.3.1"
 LIBAEC_VERSION="1.1.3"
-HDF5_PATCH_VERSION=${HDF5_VERSION}
 HIGHFIVE_VERSION="2.10.0"
-# Replace the last dot with a dash because that's what some of the files in this
-# release have done.
-# HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
-# https://github.com/pypa/cibuildwheel/blob/89a5cfe2721c179f4368a2790669e697759b6644/cibuildwheel/macos.py#L296-L310
+# https://github.com/pypa/cibuildwheel/blob/9c75ea15c2f31a77e6043b80b1b7081372319d85/cibuildwheel/macos.py#L302-L315
 if [[ "${ARCH}" == "arm64" ]]; then
     export MACOSX_DEPLOYMENT_TARGET="11.0"
 else
@@ -86,16 +82,16 @@ fi
 
 brew install ninja cmake
 
-pushd ${PROJECT_PATH}
+pushd ${RUNNER_TEMP}
 
-curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_PATCH_VERSION}.tar.gz"
-tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
-mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
-pushd hdf5-${HDF5_PATCH_VERSION}/build
+curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz"
+tar -xzvf hdf5-${HDF5_VERSION}.tar.gz --strip-components=1 -C hdf5-${HDF5_VERSION}
+mkdir -p hdf5-${HDF5_VERSION}/build
+pushd hdf5-${HDF5_VERSION}/build
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${HDF5_DIR} \
+    -DCMAKE_INSTALL_PREFIX="${HDF5_DIR}" \
     -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
     -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
     -DHDF5_BUILD_EXAMPLES:BOOL=OFF \
@@ -123,8 +119,8 @@ pushd HighFive-${HIGHFIVE_VERSION}/build
 
 cmake -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DHDF5_ROOT=${HDF5_DIR} \
-    -DCMAKE_INSTALL_PREFIX=${HIGHFIVE_DIR} \
+    -DHDF5_ROOT="${HDF5_DIR}" \
+    -DCMAKE_INSTALL_PREFIX="${HIGHFIVE_DIR}" \
     -DHIGHFIVE_USE_BOOST:BOOL=OFF \
     -DHIGHFIVE_UNIT_TESTS:BOOL=OFF \
     -DHIGHFIVE_EXAMPLES:BOOL=OFF \
