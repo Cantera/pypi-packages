@@ -35,7 +35,7 @@ set -eo pipefail
 
 function setup_github_env {
     if [[ "$GITHUB_ENV" != "" ]]; then
-        echo "HDF5_DIR=${HDF5_DIR}" | tee -a $GITHUB_ENV
+        echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
         echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" | tee -a $GITHUB_ENV
         echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
         echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
