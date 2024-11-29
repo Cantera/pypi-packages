@@ -44,8 +44,8 @@ nuget install zlib-msvc-x64 -ExcludeVersion -OutputDirectory "$PROJECT_PATH"
 EXTRA_PATH="$PROJECT_PATH\zlib-msvc-x64\build\native\bin_release"
 export PATH="$PATH:$EXTRA_PATH"
 export CL="/I$PROJECT_PATH\zlib-msvc-x64\build\native\include"
-export LINK="/LIBPATH:$ZLIB_ROOT"
-export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
+export LINK="/LIBPATH:$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
+export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native"
 
 # HDF5
 export HDF5_VERSION="1.14.5"
@@ -63,6 +63,4 @@ if [[ "$GITHUB_ENV" != "" ]] ; then
     echo "LINK=$LINK" | tee -a $GITHUB_ENV
     echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
     echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
-    echo "HDF5_LIB_DIR=${HDF5_DIR}\lib" | tee -a $GITHUB_ENV
-    echo "ZLIB_LIB_DIR=${ZLIB_ROOT}\bin_release" | tee -a $GITHUB_ENV
 fi
