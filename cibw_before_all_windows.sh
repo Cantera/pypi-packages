@@ -39,22 +39,62 @@ if [[ "$1" == "" ]] ; then
 fi
 PROJECT_PATH="$1"
 
-# nuget
-nuget install zlib-msvc-x64 -ExcludeVersion -OutputDirectory "$PROJECT_PATH"
-EXTRA_PATH="$PROJECT_PATH\zlib-msvc-x64\build\native\bin_release"
-export PATH="$PATH:$EXTRA_PATH"
-export CL="/I$PROJECT_PATH\zlib-msvc-x64\build\native\include"
-export LINK="/LIBPATH:$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
-export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native"
-
 # HDF5
-export HDF5_VERSION="1.14.5"
-export HDF5_VSVERSION="17-64"
-export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION"
+HDF5_VERSION="1.14.5"
+ZLIB_VERSION="1.3.1"
+LIBAEC_VERSION="1.1.3"
+HIGHFIVE_VERSION="2.10.0"
 
-python -m pip install requests
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-python $SCRIPT_DIR/get_hdf5_win.py
+HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
+HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
+
+pushd ${RUNNER_TEMP}
+
+curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz"
+tar -xzvf hdf5-${HDF5_VERSION}.tar.gz
+mkdir -p hdf5-${HDF5_VERSION}/build
+pushd hdf5-${HDF5_VERSION}/build
+
+cmake -G "Visual Studio 17 2022" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="${HDF5_DIR}" \
+    -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
+    -DHDF5_ENABLE_SZIP_SUPPORT:BOOL=ON \
+    -DHDF5_BUILD_EXAMPLES:BOOL=OFF \
+    -DHDF5_BUILD_TOOLS:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DHDF5_ALLOW_EXTERNAL_SUPPORT:STRING=TGZ \
+    -DZLIB_PACKAGE_NAME:STRING=zlib \
+    -DZLIB_TGZ_NAME:STRING=zlib-${ZLIB_VERSION}.tar.gz \
+    -DZLIB_TGZ_ORIGPATH:STRING=https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION} \
+    -DZLIB_USE_LOCALCONTENT:BOOL=OFF \
+    -DLIBAEC_PACKAGE_NAME:STRING=libaec \
+    -DLIBAEC_TGZ_NAME:STRING=libaec-${LIBAEC_VERSION}.tar.gz \
+    -DLIBAEC_TGZ_ORIGPATH:STRING=https://github.com/MathisRosenhauer/libaec/releases/download/v${LIBAEC_VERSION} \
+    -DLIBAEC_USE_LOCALCONTENT:BOOL=OFF \
+    -DHDF_PACKAGE_NAMESPACE:STRING=ct_ \
+    ..
+
+cmake --build . --target install --config Release
+popd
+
+curl -fsSLO https://github.com/BlueBrain/HighFive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
+tar -xzf v${HIGHFIVE_VERSION}.tar.gz
+mkdir -p HighFive-${HIGHFIVE_VERSION}/build
+pushd HighFive-${HIGHFIVE_VERSION}/build
+
+cmake -G "Visual Studio 17 2022" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DHDF5_ROOT="${HDF5_DIR}" \
+    -DCMAKE_INSTALL_PREFIX="${HIGHFIVE_DIR}" \
+    -DHIGHFIVE_USE_BOOST:BOOL=OFF \
+    -DHIGHFIVE_UNIT_TESTS:BOOL=OFF \
+    -DHIGHFIVE_EXAMPLES:BOOL=OFF \
+    -DHIGHFIVE_BUILD_DOCS:BOOL=OFF \
+    ..
+
+cmake --build . --target install --config Release
+popd
 
 if [[ "$GITHUB_ENV" != "" ]] ; then
     # PATH on windows is special
