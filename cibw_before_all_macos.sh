@@ -51,11 +51,9 @@ if [[ "$1" == "" ]] ; then
 fi
 PROJECT_PATH="$1"
 ARCH=$(uname -m)
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-HDF5_VERSION="1.14.5"
-ZLIB_VERSION="1.3.1"
-LIBAEC_VERSION="1.1.3"
-HIGHFIVE_VERSION="2.10.0"
+source "${SCRIPT_DIR}/dependencies.sh"
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
