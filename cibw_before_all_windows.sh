@@ -53,7 +53,7 @@ pushd ${RUNNER_TEMP}
 set +x
 
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz"
-tar -xzvf hdf5-${HDF5_VERSION}.tar.gz
+tar -xzf hdf5-${HDF5_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_VERSION}/build
 pushd hdf5-${HDF5_VERSION}/build
 
