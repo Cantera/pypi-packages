@@ -50,6 +50,8 @@ HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
 
 pushd ${RUNNER_TEMP}
 
+set +x
+
 curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz"
 tar -xzvf hdf5-${HDF5_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_VERSION}/build
@@ -96,11 +98,16 @@ cmake -G "Visual Studio 17 2022" \
 cmake --build . --target install --config Release
 popd
 
+find $HDF5_DIR -type f
+find $HIGHFIVE_DIR -type f
+
 if [[ "$GITHUB_ENV" != "" ]] ; then
     # PATH on windows is special
     echo "$EXTRA_PATH" | tee -a $GITHUB_PATH
     echo "CL=$CL" | tee -a $GITHUB_ENV
     echo "LINK=$LINK" | tee -a $GITHUB_ENV
-    echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
-    echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
+    echo "HDF5_ROOT=$HDF5_DIR" | tee -a $GITHUB_ENV
+    echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
 fi
+
+set -x

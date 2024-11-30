@@ -155,34 +155,34 @@ jobs:
       matrix:
         # Wheel builds are fast except for aarch64, so split that into multiple jobs,
         # one for each Python version
-        os: [ubuntu-latest]
-        arch: [aarch64]
-        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        # os: [ubuntu-latest]
+        # arch: [aarch64]
+        # python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         include:
-          - os: ubuntu-latest
-            arch: x86_64
+          # - os: ubuntu-latest
+          #   arch: x86_64
           - os: windows-2022
             arch: AMD64
             boost-arch: x86
             boost-toolset: msvc
             boost-platform-version: 2022
             boost-version: "1.86.0"
-          - os: macos-14
-            arch: arm64
-            boost-arch: aarch64
-            boost-toolset: clang
-            # Since we only use the headers, we can use the platform version for this
-            # macos version
-            boost-platform-version: "14"
-            boost-version: "1.86.0"
-          - os: macos-13
-            arch: x86_64
-            boost-arch: x86
-            boost-toolset: clang
-            # Since we only use the headers, we can use the platform version for this
-            # macos version
-            boost-platform-version: "13"
-            boost-version: "1.86.0"
+          # - os: macos-14
+          #   arch: arm64
+          #   boost-arch: aarch64
+          #   boost-toolset: clang
+          #   # Since we only use the headers, we can use the platform version for this
+          #   # macos version
+          #   boost-platform-version: "14"
+          #   boost-version: "1.86.0"
+          # - os: macos-13
+          #   arch: x86_64
+          #   boost-arch: x86
+          #   boost-toolset: clang
+          #   # Since we only use the headers, we can use the platform version for this
+          #   # macos version
+          #   boost-platform-version: "13"
+          #   boost-version: "1.86.0"
       fail-fast: false
     steps:
       - name: Checkout the repository
@@ -240,9 +240,6 @@ jobs:
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
-      - name: Set Up Nuget
-        uses: nuget/setup-nuget@v2
-        if: runner.os == 'Windows'
       - uses: actions/setup-python@v5
         with:
           python-version: 3.12
