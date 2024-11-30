@@ -230,13 +230,13 @@ jobs:
             platform_version: ${{ matrix.boost-platform-version }}
             arch: ${{ matrix.boost-arch }}
 
-      - name: Cache built libraries
-        id: cache-built-libraries
-        # Our custom manylinux images already have hdf5 installed
+      - name: Restore the cached built libraries
+        id: restore-built-libraries
+        # Our custom manylinux images already have all our dependencies installed
         if: runner.os != 'Linux'
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-1
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
@@ -269,6 +269,13 @@ jobs:
         with:
           python-version: 3.8
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
+
+      - name: Save the cache
+        uses: actions/cache/save@v4
+        if: always() && steps.restore-built-libraries.outputs.cache-hit != 'true'
+        with:
+          path: ${{ github.workspace }}/cache
+          key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
       - name: Set up CIBW environment
         run: |
