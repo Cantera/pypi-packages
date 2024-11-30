@@ -1,4 +1,4 @@
 export HDF5_VERSION="1.14.5"
-export LIBAEC_VERSION="1.3.1"
-export ZLIB_VERSION="1.1.3"
+export LIBAEC_VERSION="1.1.3"
+export ZLIB_VERSION="1.3.1"
 export HIGHFIVE_VERSION="2.10.0"
