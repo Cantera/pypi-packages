@@ -107,6 +107,7 @@ if [[ "$GITHUB_ENV" != "" ]] ; then
     echo "CL=$CL" | tee -a $GITHUB_ENV
     echo "LINK=$LINK" | tee -a $GITHUB_ENV
     echo "HDF5_ROOT=$HDF5_DIR" | tee -a $GITHUB_ENV
+    echo "HDF5_LIB_DIR=$HDF5_DIR\bin" | tee -a $GITHUB_ENV
     echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
 fi
 
