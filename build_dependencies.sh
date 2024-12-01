@@ -63,7 +63,8 @@ cmake -G "$GENERATOR" \
     -DBUILD_KINSOL=OFF \
     -DBUILD_CPODES=OFF \
     -DBUILD_FORTRAN_MODULE_INTERFACE=OFF \
-    "${SUNDIALS_BUILD_OPTIONS[@]}"
+    "${SUNDIALS_BUILD_OPTIONS[@]}" \
+    ..
 
 cmake --build . --target install --config Release
 popd
