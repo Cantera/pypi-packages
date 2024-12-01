@@ -6,7 +6,7 @@ tar -xzf hdf5-${HDF5_VERSION}.tar.gz
 mkdir -p hdf5-${HDF5_VERSION}/build
 pushd hdf5-${HDF5_VERSION}/build
 
-cmake -G $GENERATOR \
+cmake -G "$GENERATOR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="${HDF5_DIR}" \
     -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
@@ -34,7 +34,7 @@ tar -xzf v${HIGHFIVE_VERSION}.tar.gz
 mkdir -p HighFive-${HIGHFIVE_VERSION}/build
 pushd HighFive-${HIGHFIVE_VERSION}/build
 
-cmake -G $GENERATOR \
+cmake -G "$GENERATOR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DHDF5_ROOT="${HDF5_DIR}" \
     -DCMAKE_INSTALL_PREFIX="${HIGHFIVE_DIR}" \
@@ -52,7 +52,7 @@ tar -xzf sundials-${SUNDIALS_VERSION}.tar.gz
 mkdir -p sundials-${SUNDIALS_VERSION}/build
 pushd sundials-${SUNDIALS_VERSION}/build
 
-cmake -G $GENERATOR \
+cmake -G "$GENERATOR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="${SUNDIALS_DIR}" \
     -DEXAMPLES_INSTALL=OFF \
