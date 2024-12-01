@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copied from h5py. Licensed under the BSD 3-Clause license.
+# Adapted from h5py. Licensed under the BSD 3-Clause license.
 # Copyright (c) 2008 Andrew Collette and contributors
 # All rights reserved.
 
@@ -32,45 +32,41 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set -eo pipefail
+set +x
 
 function setup_github_env {
-    if [[ "$GITHUB_ENV" != "" ]]; then
-        echo "HDF5_DIR=${HDF5_DIR}" | tee -a $GITHUB_ENV
-        echo "LIBAEC_DIR=${LIBAEC_DIR}" | tee -a $GITHUB_ENV
-        echo "ZLIB_DIR=${ZLIB_DIR}" | tee -a $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" | tee -a $GITHUB_ENV
-        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-        echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${ZLIB_DIR}/lib:${LIBAEC_DIR}/lib" | tee -a $GITHUB_ENV
-    fi
+    echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
+    echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
+    echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
+    echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
+    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
 }
-
-set +x
 
 if [[ "$1" == "" ]] ; then
     echo "Usage: $0 <PROJECT_PATH>"
     exit 1
 fi
+
 PROJECT_PATH="$1"
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ARCH=$(uname -m)
+GENERATOR="Ninja"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-ZLIB_VERSION="1.3.1"
-LIBAEC_VERSION="1.0.6"
-
-HDF5_VERSION="1.14.4.3"
-# Replace the last dot with a dash because that's what some of the files in this
-# release have done.
-HDF5_PATCH_VERSION=${HDF5_VERSION%.*}-${HDF5_VERSION##*.}
+source "${SCRIPT_DIR}/dependencies.sh"
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
-ZLIB_DIR="${PROJECT_PATH}/cache/zlib/${ZLIB_VERSION}-${ARCH}"
-LIBAEC_DIR="${PROJECT_PATH}/cache/libaec/${LIBAEC_VERSION}-${ARCH}"
-
-LD_LIBRARY_PATH="${ZLIB_DIR}/lib:${LD_LIBRARY_PATH}"
+HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
+SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}-${ARCH}"
+SUNDIALS_BUILD_OPTIONS=(
+    "-DENABLE_LAPACK=ON"
+    "-DBLA_VENDOR=Apple"
+    "-DSUNDIALS_LAPACK_CASE=LOWER"
+    "-DSUNDIALS_LAPACK_UNDERSCORES=NONE"
+)
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
-# https://github.com/pypa/cibuildwheel/blob/89a5cfe2721c179f4368a2790669e697759b6644/cibuildwheel/macos.py#L296-L310
+# https://github.com/pypa/cibuildwheel/blob/9c75ea15c2f31a77e6043b80b1b7081372319d85/cibuildwheel/macos.py#L302-L315
 if [[ "${ARCH}" == "arm64" ]]; then
     export MACOSX_DEPLOYMENT_TARGET="11.0"
 else
@@ -79,68 +75,18 @@ else
 fi
 
 lib_name=libhdf5.dylib
+inc_name=highfive.hpp
 
-if [ -f ${HDF5_DIR}/lib/${lib_name} ]; then
+if [ -f ${HDF5_DIR}/lib/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/${inc_name} ]; then
     echo "using cached build"
     setup_github_env
     exit 0
 else
-    echo "building HDF5"
+    echo "building dependencies"
 fi
 
 brew install ninja cmake
 
-pushd ${PROJECT_PATH}
-
-curl -fsSLO "https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zlib-${ZLIB_VERSION}.tar.gz"
-tar -xzf zlib-${ZLIB_VERSION}.tar.gz
-
-mkdir -p zlib-${ZLIB_VERSION}/build
-pushd zlib-${ZLIB_VERSION}/build
-cmake -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=${ZLIB_DIR} \
-    -DZLIB_BUILD_EXAMPLES=OFF \
-    ..
-
-ninja install
-popd
-
-curl -fsSLO "https://gitlab.dkrz.de/k202009/libaec/uploads/45b10e42123edd26ab7b3ad92bcf7be2/libaec-${LIBAEC_VERSION}.tar.gz"
-tar -xzf libaec-${LIBAEC_VERSION}.tar.gz
-mkdir -p libaec-${LIBAEC_VERSION}/build
-pushd libaec-${LIBAEC_VERSION}
-patch -p0 < ${SCRIPT_DIR}/libaec_cmakelists.patch
-pushd build
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=${LIBAEC_DIR} \
-    -DBUILD_TESTING=OFF \
-    ..
-
-ninja install
-popd
-popd
-
-curl -fsSLO "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_PATCH_VERSION}.tar.gz"
-tar -xzf hdf5-${HDF5_PATCH_VERSION}.tar.gz
-mkdir -p hdf5-${HDF5_PATCH_VERSION}/build
-pushd hdf5-${HDF5_PATCH_VERSION}/build
-
-cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DZLIB_ROOT=${ZLIB_DIR} \
-    -Dlibaec_ROOT=${LIBAEC_DIR} \
-    -DCMAKE_INSTALL_PREFIX=${HDF5_DIR} \
-    -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
-    -DHDF5_ENABLE_SZIP_SUPPORT=ON \
-    -DHDF5_BUILD_EXAMPLES=OFF \
-    -DBUILD_TESTING=OFF \
-    ..
-
-ninja install
-popd
+source "${SCRIPT_DIR}/build_dependencies.sh"
 
 setup_github_env
-
-set -x

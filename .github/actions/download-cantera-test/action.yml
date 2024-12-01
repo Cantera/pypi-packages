@@ -34,10 +34,3 @@ runs:
       rm cantera.tar.gz
     shell: bash
     working-directory: ${{ steps.set-output.outputs.DESTINATION_PATH }}
-  - name: Save the test file cache
-    uses: actions/cache/save@v4
-    if: always() && steps.restore-cache.outputs.cache-hit != true
-    id: save-cache
-    with:
-      path: ${{ steps.set-output.outputs.DESTINATION_PATH }}/test
-      key: ${{ steps.restore-cache.outputs.cache-primary-key }}

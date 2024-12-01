@@ -157,7 +157,7 @@ jobs:
         # one for each Python version
         os: [ubuntu-latest]
         arch: [aarch64]
-        python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
         include:
           - os: ubuntu-latest
             arch: x86_64
@@ -166,7 +166,7 @@ jobs:
             boost-arch: x86
             boost-toolset: msvc
             boost-platform-version: 2022
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
           - os: macos-14
             arch: arm64
             boost-arch: aarch64
@@ -174,7 +174,7 @@ jobs:
             # Since we only use the headers, we can use the platform version for this
             # macos version
             boost-platform-version: "14"
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
           - os: macos-13
             arch: x86_64
             boost-arch: x86
@@ -182,7 +182,7 @@ jobs:
             # Since we only use the headers, we can use the platform version for this
             # macos version
             boost-platform-version: "13"
-            boost-version: "1.85.0"
+            boost-version: "1.86.0"
       fail-fast: false
     steps:
       - name: Checkout the repository
@@ -230,24 +230,18 @@ jobs:
             platform_version: ${{ matrix.boost-platform-version }}
             arch: ${{ matrix.boost-arch }}
 
-      - name: Cache built libraries
-        id: cache-built-libraries
-        # Our custom manylinux images already have hdf5 installed
+      - name: Restore the cached built libraries
+        id: restore-built-libraries
+        # Our custom manylinux images already have all our dependencies installed
         if: runner.os != 'Linux'
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-0
-          path: ${{ runner.temp }}/cache
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-0
+          path: ${{ github.workspace }}/cache
 
       # Windows-only steps
-      - name: Set Up Nuget
-        uses: nuget/setup-nuget@v2
-        if: runner.os == 'Windows'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-        if: runner.os == 'Windows'
-      - run: bash ./cibw_before_all_windows.sh "${{ runner.temp }}"
+      - name: Build required libraries
+        run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
         if: runner.os == 'Windows'
       - name: Set up CIBW environment
         # On Windows, Boost_ROOT needs to have \ replaced by / because that's what
@@ -263,7 +257,7 @@ jobs:
 
       # macOS-only steps
       - name: Build required libraries
-        run: bash ./cibw_before_all_macos.sh "${{ runner.temp }}"
+        run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
         if: runner.os == 'macOS'
       # Force installation to resolve Python 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
       - name: Hack for 3.8 bug
@@ -271,6 +265,13 @@ jobs:
         with:
           python-version: 3.8
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
+
+      - name: Save the cache
+        uses: actions/cache/save@v4
+        if: always() && steps.restore-built-libraries.outputs.cache-hit != 'true'
+        with:
+          path: ${{ github.workspace }}/cache
+          key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
       - name: Set up CIBW environment
         run: |
@@ -280,7 +281,7 @@ jobs:
         if: runner.os == 'macOS'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.2
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 CMAKE_BUILD_PARALLEL_LEVEL=4

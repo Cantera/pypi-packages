@@ -32,6 +32,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 set -eo pipefail
+set +x
+
+function setup_github_env {
+    echo "HDF5_ROOT=$HDF5_DIR" | tee -a $GITHUB_ENV
+    echo "HDF5_LIB_DIR=$HDF5_DIR\bin" | tee -a $GITHUB_ENV
+    echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
+    echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
+    echo "SUNDIALS_LIB_DIR=${SUNDIALS_DIR}\bin" | tee -a $GITHUB_ENV
+}
 
 if [[ "$1" == "" ]] ; then
     echo "Usage: $0 <PROJECT_PATH>"
@@ -39,30 +48,27 @@ if [[ "$1" == "" ]] ; then
 fi
 PROJECT_PATH="$1"
 
-# nuget
-nuget install zlib-msvc-x64 -ExcludeVersion -OutputDirectory "$PROJECT_PATH"
-EXTRA_PATH="$PROJECT_PATH\zlib-msvc-x64\build\native\bin_release"
-export PATH="$PATH:$EXTRA_PATH"
-export CL="/I$PROJECT_PATH\zlib-msvc-x64\build\native\include"
-export LINK="/LIBPATH:$PROJECT_PATH\zlib-msvc-x64\build\native\lib_release"
-export ZLIB_ROOT="$PROJECT_PATH\zlib-msvc-x64\build\native"
-
-# HDF5
-export HDF5_VERSION="1.14.4.3"
-export HDF5_VSVERSION="17-64"
-export HDF5_DIR="$PROJECT_PATH/cache/hdf5/$HDF5_VERSION"
-
-python -m pip install requests
+GENERATOR="Visual Studio 17 2022"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-python $SCRIPT_DIR/get_hdf5_win.py
 
-if [[ "$GITHUB_ENV" != "" ]] ; then
-    # PATH on windows is special
-    echo "$EXTRA_PATH" | tee -a $GITHUB_PATH
-    echo "CL=$CL" | tee -a $GITHUB_ENV
-    echo "LINK=$LINK" | tee -a $GITHUB_ENV
-    echo "ZLIB_ROOT=$ZLIB_ROOT" | tee -a $GITHUB_ENV
-    echo "HDF5_DIR=$HDF5_DIR" | tee -a $GITHUB_ENV
-    echo "HDF5_LIB_DIR=${HDF5_DIR}\lib" | tee -a $GITHUB_ENV
-    echo "ZLIB_LIB_DIR=${ZLIB_ROOT}\bin_release" | tee -a $GITHUB_ENV
+source "${SCRIPT_DIR}/dependencies.sh"
+
+HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
+HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
+SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}"
+SUNDIALS_BUILD_OPTIONS=()
+
+lib_name=hdf5.dll
+inc_name=highfive.hpp
+
+if [ -f ${HDF5_DIR}/bin/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/${inc_name} ]; then
+    echo "using cached build"
+    setup_github_env
+    exit 0
+else
+    echo "building dependencies"
 fi
+
+source "${SCRIPT_DIR}/build_dependencies.sh"
+
+setup_github_env
