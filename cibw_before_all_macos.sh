@@ -37,7 +37,7 @@ set +x
 function setup_github_env {
     echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
     echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
-    echo "Sundials_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
+    echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
     echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
 }
