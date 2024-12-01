@@ -47,7 +47,7 @@ fi
 PROJECT_PATH="$1"
 
 GENERATOR="Visual Studio 17 2022"
-SCRIPT_DIR=$( cd -P "$( dirname "$(readlink -f "$0")" )" && pwd )
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
@@ -60,10 +60,10 @@ if [ -f ${HDF5_DIR}/bin/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/$
     setup_github_env
     exit 0
 else
-    echo "building HDF5"
+    echo "building dependencies"
 fi
 
 source "${SCRIPT_DIR}/dependencies.sh"
-source "${SCRIPT_IDR}/build_dependencies.sh"
+source "${SCRIPT_DIR}/build_dependencies.sh"
 
 setup_github_env

@@ -74,7 +74,7 @@ if [ -f ${HDF5_DIR}/lib/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/$
     setup_github_env
     exit 0
 else
-    echo "building HDF5"
+    echo "building dependencies"
 fi
 
 brew install ninja cmake
