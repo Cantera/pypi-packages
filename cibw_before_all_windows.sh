@@ -47,7 +47,7 @@ fi
 PROJECT_PATH="$1"
 
 GENERATOR="Visual Studio 17 2022"
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SCRIPT_DIR=$( cd -P "$( dirname "$(readlink -f "$0")" )" && pwd )
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"

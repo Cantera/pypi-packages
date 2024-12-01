@@ -50,7 +50,7 @@ fi
 
 PROJECT_PATH="$1"
 ARCH=$(uname -m)
-GENERATOR="ninja"
+GENERATOR="Ninja"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
