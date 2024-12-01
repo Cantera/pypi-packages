@@ -38,6 +38,7 @@ function setup_github_env {
     echo "HDF5_ROOT=$HDF5_DIR" | tee -a $GITHUB_ENV
     echo "HDF5_LIB_DIR=$HDF5_DIR\bin" | tee -a $GITHUB_ENV
     echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
+    echo "Sundials_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
@@ -51,6 +52,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
+SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}"
+SUNDIALS_BUILD_OPTIONS=()
 
 lib_name=hdf5.dll
 inc_name=highfive.hpp

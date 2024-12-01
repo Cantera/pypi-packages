@@ -46,3 +46,24 @@ cmake -G $GENERATOR \
 
 cmake --build . --target install --config Release
 popd
+
+curl -fsSLO https://github.com/LLNL/sundials/releases/download/v${SUNDIALS_VERSION}/sundials-${SUNDIALS_VERSION}.tar.gz
+tar -xzf sundials-${SUNDIALS_VERSION}.tar.gz
+mkdir -p sundials-${SUNDIALS_VERSION}/build
+pushd sundials-${SUNDIALS_VERSION}/build
+
+cmake -G $GENERATOR \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="${SUNDIALS_DIR}" \
+    -DEXAMPLES_INSTALL=OFF \
+    -DEXAMPLES_ENABLE_C=OFF \
+    -DBUILD_ARKODE=OFF \
+    -DBUILD_CVODE=OFF \
+    -DBUILD_IDA=OFF \
+    -DBUILD_KINSOL=OFF \
+    -DBUILD_CPODES=OFF \
+    -DBUILD_FORTRAN_MODULE_INTERFACE=OFF \
+    "${SUNDIALS_BUILD_OPTIONS[@]}"
+
+cmake --build . --target install --config Release
+popd

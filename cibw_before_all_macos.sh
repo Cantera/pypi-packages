@@ -35,12 +35,11 @@ set -eo pipefail
 set +x
 
 function setup_github_env {
-    if [[ "$GITHUB_ENV" != "" ]]; then
-        echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
-        echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
-        echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-        echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
-    fi
+    echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
+    echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
+    echo "Sundials_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
+    echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
+    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
@@ -55,6 +54,13 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
+SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}-${ARCH}"
+SUNDIALS_BUILD_OPTIONS=(
+    "-DENABLE_LAPACK=ON"
+    "-DBLA_VENDOR=Apple"
+    "-DSUNDIALS_LAPACK_CASE=LOWER"
+    "-DSUNDIALS_LAPACK_UNDERSCORES=NONE"
+)
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
