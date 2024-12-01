@@ -52,6 +52,8 @@ ARCH=$(uname -m)
 GENERATOR="Ninja"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+source "${SCRIPT_DIR}/dependencies.sh"
+
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}-${ARCH}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}-${ARCH}"
 SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}-${ARCH}"
@@ -85,7 +87,6 @@ fi
 
 brew install ninja cmake
 
-source "${SCRIPT_DIR}/dependencies.sh"
 source "${SCRIPT_DIR}/build_dependencies.sh"
 
 setup_github_env

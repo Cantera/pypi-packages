@@ -236,14 +236,10 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache/restore@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-0
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-        if: runner.os == 'Windows'
       - name: Build required libraries
         run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
         if: runner.os == 'Windows'

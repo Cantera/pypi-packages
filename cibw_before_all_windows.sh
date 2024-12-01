@@ -50,6 +50,8 @@ PROJECT_PATH="$1"
 GENERATOR="Visual Studio 17 2022"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+source "${SCRIPT_DIR}/dependencies.sh"
+
 HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
 SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}"
@@ -66,7 +68,6 @@ else
     echo "building dependencies"
 fi
 
-source "${SCRIPT_DIR}/dependencies.sh"
 source "${SCRIPT_DIR}/build_dependencies.sh"
 
 setup_github_env
