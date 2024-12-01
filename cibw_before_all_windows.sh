@@ -39,6 +39,7 @@ function setup_github_env {
     echo "HDF5_LIB_DIR=$HDF5_DIR\bin" | tee -a $GITHUB_ENV
     echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
+    echo "SUNDIALS_LIB_DIR=${SUNDIALS_DIR}\bin" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
