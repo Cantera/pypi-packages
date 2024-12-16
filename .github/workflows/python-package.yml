@@ -78,7 +78,8 @@ jobs:
         run: |
           if [[ "${INCOMING_SHA}" == "" ]]; then
             INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
-              -H "Accept: application/vnd.github.v3+json" --jq ".[0].object.sha")
+              -H "Accept: application/vnd.github.v3+json" \
+              --jq '.[] | select(.ref == "refs/${INCOMING_REF}") | .object.sha'
             echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           fi
           # This needs to be in this step to be output to other jobs.
