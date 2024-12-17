@@ -78,8 +78,8 @@ jobs:
         run: |
           set -x
           echo INCOMING_REF=$INCOMING_REF
-          gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
-              -H "Accept: application/vnd.github.v3+json"
+          echo $(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
+              -H "Accept: application/vnd.github.v3+json")
           if [[ "${INCOMING_SHA}" == "" ]]; then
             INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
               -H "Accept: application/vnd.github.v3+json" \
