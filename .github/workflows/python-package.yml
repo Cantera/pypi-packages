@@ -76,10 +76,14 @@ jobs:
       - name: Get the SHA associated with the incoming ref
         id: get-incoming-sha
         run: |
+          set -x
+          echo INCOMING_REF=$INCOMING_REF
+          gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
+              -H "Accept: application/vnd.github.v3+json"
           if [[ "${INCOMING_SHA}" == "" ]]; then
             INCOMING_SHA=$(gh api repos/cantera/cantera/git/matching-refs/${INCOMING_REF} \
               -H "Accept: application/vnd.github.v3+json" \
-              --jq '.[] | select(.ref == "refs/${INCOMING_REF}") | .object.sha')
+              --jq '.[] | select(.ref == "${INCOMING_REF}") | .object.sha')
             echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
           fi
           # This needs to be in this step to be output to other jobs.
