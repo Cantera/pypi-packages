@@ -157,7 +157,7 @@ jobs:
         # one for each Python version
         os: [ubuntu-latest]
         arch: [aarch64]
-        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - os: ubuntu-latest
             arch: x86_64
@@ -217,7 +217,7 @@ jobs:
       - name: Install boost
         # Our custom manylinux images already have Boost installed
         if: runner.os != 'Linux'
-        uses: MarkusJx/install-boost@v2.4.5
+        uses: MarkusJx/install-boost@v2.5.0
         id: install-boost
         with:
             # REQUIRED: Specify the required boost version
@@ -259,12 +259,6 @@ jobs:
       - name: Build required libraries
         run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
         if: runner.os == 'macOS'
-      # Force installation to resolve Python 3.8 bug (https://github.com/pypa/cibuildwheel/pull/1871#issuecomment-2161613619)
-      - name: Hack for 3.8 bug
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.8
-        if: runner.os == 'macOS' && matrix.arch == 'arm64'
 
       - name: Save the cache
         uses: actions/cache/save@v4
