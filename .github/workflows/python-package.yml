@@ -24,7 +24,7 @@ env:
 jobs:
   dump:
     name: Dump the input parameters for the workflow
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Dump Event Payload
         run: jq . "$GITHUB_EVENT_PATH"
@@ -35,7 +35,7 @@ jobs:
 
   post-pending-status:
     name: Post a pending workflow status to Cantera/cantera
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
     outputs:
@@ -146,22 +146,17 @@ jobs:
           echo ----- End of Metadata  -----
 
   build-wheels:
-    name: Build ${{ matrix.os }} ${{ matrix.arch }} for py${{ matrix.python || '-all' }}
+    name: Build ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs: ["sdist", "post-pending-status"]
     outputs:
       job-status: ${{ job.status }}
     strategy:
       matrix:
-        # Wheel builds are fast except for aarch64, so split that into multiple jobs,
-        # one for each Python version
-        # os: [ubuntu-latest]
-        # arch: [aarch64]
-        # python: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - os: ubuntu-24.04-arm
             arch: aarch64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: x86_64
           - os: windows-2022
             arch: AMD64
@@ -211,6 +206,7 @@ jobs:
           echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
         if: runner.os == 'Linux'
 
+      # Non-Linux steps
       - name: Install boost
         # Our custom manylinux images already have Boost installed
         if: runner.os != 'Linux'
@@ -259,7 +255,7 @@ jobs:
 
       - name: Save the cache
         uses: actions/cache/save@v4
-        if: always() && steps.restore-built-libraries.outputs.cache-hit != 'true'
+        if: always() && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/cache
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
@@ -287,7 +283,7 @@ jobs:
 
   publish-files-to-pypi:
     name: Publish distribution files to PyPI
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       job-status: ${{ job.status }}
     needs:
@@ -309,7 +305,7 @@ jobs:
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - "post-pending-status"
       - "sdist"
