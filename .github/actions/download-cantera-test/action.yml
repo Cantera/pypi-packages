@@ -1,5 +1,5 @@
 name: "Download Cantera Test Files"
-description: "Download and cache Cantera's Python test suite"
+description: "Download and cache Cantera's test suite"
 inputs:
   incoming-sha:
     description: The hash of the commit that should be downloaded
@@ -12,14 +12,19 @@ outputs:
 runs:
   using: "composite"
   steps:
-  - name: Download and unpack the tarball
+  - name: Set download destination
+    id: set-output
     run: |
       mkdir -p "${RUNNER_TEMP}/ct-test-dir"
+      echo "DESTINATION_PATH=${RUNNER_TEMP}/ct-test-dir" >> $GITHUB_OUTPUT
+    shell: bash
+  - name: Download and unpack the tarball
+    run: |
       curl -fsSL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz
       tar -xzf cantera.tar.gz --strip-components=1 "cantera-${INCOMING_SHA}/test"
       rm cantera.tar.gz
       echo "DESTINATION_PATH=$(pwd)" >> $GITHUB_OUTPUT
     shell: bash
-    working-directory: "${{ runner.temp }}/ct-test-dir"
+    working-directory: "${{ steps.set-output.outputs.DESTINATION_PATH }}"
     env:
       INCOMING_SHA: ${{ inputs.incoming-sha }}
