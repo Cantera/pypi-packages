@@ -40,7 +40,7 @@ function setup_github_env {
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
     echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
-    echo "YAML_CPP_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
+    echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
