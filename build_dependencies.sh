@@ -69,3 +69,20 @@ cmake -G "$GENERATOR" \
 
 cmake --build . --target install --config Release
 popd
+
+curl -fsSLO https://github.com/jbeder/yaml-cpp/archive/refs/tags/${YAML_CPP_VERSION}.tar.gz
+tar -xzf ${YAML_CPP_VERSION}.tar.gz
+mkdir -p yaml-cpp-${YAML_CPP_VERSION}/build
+pushd yaml-cpp-${YAML_CPP_VERSION}/build
+cmake -G "$GENERATOR" \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DCMAKE_INSTALL_LIBDIR:STRING=lib \
+    -DYAML_CPP_DISABLE_UNINSTALL:BOOL=OFF \
+    -DYAML_CPP_FORMAT_SOURCE:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    ..
+
+cmake --build . --target install --config Release
+popd
