@@ -320,7 +320,7 @@ jobs:
       - "sdist"
       - "build-wheels"
       - "publish-files-to-pypi"
-    if: always()
+    if: always() && github.event_name != 'pull_request'
     steps:
       - name: Collect statuses
         run: | # zizmor: ignore[template-injection]
