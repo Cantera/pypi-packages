@@ -82,7 +82,7 @@ jobs:
           )
         shell: python
         env:
-          INCOMING_REF: "${{ github.event.inputs.incoming_ref || 'main' }}"
+          INCOMING_REF: "${{ inputs.incoming_ref || 'main' }}"
       - name: Post the status to the upstream commit
         id: set-the-status
         if: steps.munge-incoming-ref.outputs.tag-ref == 'false'
@@ -110,7 +110,7 @@ jobs:
         with:
           repository: "Cantera/cantera"
           submodules: recursive
-          ref: ${{ needs.post-pending-status.outputs.incoming-ref }}
+          ref: ${{ inputs.incoming_ref || 'main'}}
           persist-credentials: false
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
@@ -291,7 +291,7 @@ jobs:
     needs:
       - "sdist"
       - "build-wheels"
-    if: github.event.inputs.upload == 'true'
+    if: inputs.upload == 'true'
     environment: pypi
     steps:
       - name: Download pre-built wheels
@@ -354,7 +354,7 @@ jobs:
               gh_env.write(f"OVERALL_STATUS={overall_status}\nDESCRIPTION={description}")
         shell: python
         env:
-          UPLOAD: "${{ github.event.inputs.upload }}"
+          UPLOAD: "${{ inputs.upload }}"
       - name: Post the status to the upstream commit
         if: needs.post-pending-status.outputs.tag-ref == 'false'
         run: |
