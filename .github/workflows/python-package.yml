@@ -197,11 +197,21 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
-      - name: Download test files
+      - name: Set test file download destination
         id: download-test-files
-        uses: ./.github/actions/download-cantera-test
-        with:
-          incoming-sha: ${{ needs.post-pending-status.outputs.incoming-sha }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/ct-test-dir"
+          echo "test-root=${RUNNER_TEMP}/ct-test-dir" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Download and unpack the tarball
+        run: |
+          curl -fsSL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz
+          tar -xzf cantera.tar.gz --strip-components=1 "cantera-${INCOMING_SHA}/test"
+          rm cantera.tar.gz
+        shell: bash
+        working-directory: "${{ steps.download-test-files.outputs.test-root }}"
+        env:
+          INCOMING_SHA: ${{ needs.post-pending-status.outputs.incoming-sha }}
 
       # Non-Linux steps
       - name: Install boost
