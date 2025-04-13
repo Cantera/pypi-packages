@@ -39,7 +39,7 @@ function setup_github_env {
     echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
+    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${YAML_CPP_DIR}/lib" | tee -a $GITHUB_ENV
     echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
 }
 

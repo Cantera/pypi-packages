@@ -41,6 +41,7 @@ function setup_github_env {
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "SUNDIALS_LIB_DIR=${SUNDIALS_DIR}\bin" | tee -a $GITHUB_ENV
     echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
+    echo "YAML_CPP_LIB_DIR=${YAML_CPP_DIR}\bin" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
