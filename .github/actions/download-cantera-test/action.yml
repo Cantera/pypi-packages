@@ -18,13 +18,24 @@ runs:
       mkdir -p "${RUNNER_TEMP}/ct-test-dir"
       echo "DESTINATION_PATH=${RUNNER_TEMP}/ct-test-dir" >> $GITHUB_OUTPUT
     shell: bash
+  - name: Cache the test files
+    uses: actions/cache/restore@v4
+    id: restore-test-files-cache
+    with:
+      path: ${{ steps.set-output.outputs.DESTINATION_PATH }}
+      key: ${{ runner.os }}-ct-test-files-${{ inputs.incoming-sha }}
   - name: Download and unpack the tarball
+    if: steps.restore-test-files-cache.outputs.cache-hit != 'true'
     run: |
       curl -fsSL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz
       tar -xzf cantera.tar.gz --strip-components=1 "cantera-${INCOMING_SHA}/test"
       rm cantera.tar.gz
-      echo "DESTINATION_PATH=$(pwd)" >> $GITHUB_OUTPUT
     shell: bash
     working-directory: "${{ steps.set-output.outputs.DESTINATION_PATH }}"
     env:
       INCOMING_SHA: ${{ inputs.incoming-sha }}
+  - name: Save the cache
+    uses: actions/cache/save@v4
+    with:
+      path: ${{ steps.set-output.outputs.DESTINATION_PATH }}
+      key: ${{ steps.restore-test-files-cache.outputs.cache-primary-key }}
