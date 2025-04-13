@@ -35,6 +35,7 @@ mkdir -p HighFive-${HIGHFIVE_VERSION}/build
 pushd HighFive-${HIGHFIVE_VERSION}/build
 
 cmake -G "$GENERATOR" \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DCMAKE_BUILD_TYPE=Release \
     -DHDF5_ROOT="${HDF5_DIR}" \
     -DCMAKE_INSTALL_PREFIX="${HIGHFIVE_DIR}" \
