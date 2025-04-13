@@ -94,6 +94,8 @@ jobs:
             --field context='PyPI Package Build' \
             --field description="Pending build" \
             --silent
+        env:
+          INCOMING_SHA: "${{ steps.munge-incoming-ref.outputs.incoming-sha }}"
 
   sdist:
     name: Build the sdist
