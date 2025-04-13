@@ -236,7 +236,7 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache/restore@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-0
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
