@@ -85,7 +85,7 @@ else
     echo "building dependencies"
 fi
 
-brew install ninja cmake
+brew install ninja cmake --formula
 
 source "${SCRIPT_DIR}/build_dependencies.sh"
 
