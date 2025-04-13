@@ -40,6 +40,7 @@ function setup_github_env {
     echo "HighFive_ROOT=$HIGHFIVE_DIR" | tee -a $GITHUB_ENV
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "SUNDIALS_LIB_DIR=${SUNDIALS_DIR}\bin" | tee -a $GITHUB_ENV
+    echo "YAML_CPP_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
@@ -57,6 +58,7 @@ HDF5_DIR="${PROJECT_PATH}/cache/hdf5/${HDF5_VERSION}"
 HIGHFIVE_DIR="${PROJECT_PATH}/cache/highfive/${HIGHFIVE_VERSION}"
 SUNDIALS_DIR="${PROJECT_PATH}/cache/sundials/${SUNDIALS_VERSION}"
 SUNDIALS_BUILD_OPTIONS=()
+YAML_CPP_DIR="${PROJECT_PATH}/cache/yaml-cpp/${YAML_CPP_VERSION}"
 
 lib_name=hdf5.dll
 inc_name=highfive.hpp
