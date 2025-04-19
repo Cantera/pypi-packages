@@ -39,7 +39,8 @@ function setup_github_env {
     echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
     echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
     echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib" | tee -a $GITHUB_ENV
+    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${YAML_CPP_DIR}/lib" | tee -a $GITHUB_ENV
+    echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
 }
 
 if [[ "$1" == "" ]] ; then
@@ -63,6 +64,7 @@ SUNDIALS_BUILD_OPTIONS=(
     "-DSUNDIALS_LAPACK_CASE=LOWER"
     "-DSUNDIALS_LAPACK_UNDERSCORES=NONE"
 )
+YAML_CPP_DIR="${PROJECT_PATH}/cache/yaml-cpp/${YAML_CPP_VERSION}-${ARCH}"
 
 # When compiling HDF5, we should use the minimum across all Python versions for a given
 # arch, for versions see for example a more updated version of the following:
@@ -85,7 +87,7 @@ else
     echo "building dependencies"
 fi
 
-brew install ninja cmake
+brew install ninja cmake --formula
 
 source "${SCRIPT_DIR}/build_dependencies.sh"
 

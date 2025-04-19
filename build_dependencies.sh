@@ -35,6 +35,7 @@ mkdir -p HighFive-${HIGHFIVE_VERSION}/build
 pushd HighFive-${HIGHFIVE_VERSION}/build
 
 cmake -G "$GENERATOR" \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DCMAKE_BUILD_TYPE=Release \
     -DHDF5_ROOT="${HDF5_DIR}" \
     -DCMAKE_INSTALL_PREFIX="${HIGHFIVE_DIR}" \
@@ -64,6 +65,23 @@ cmake -G "$GENERATOR" \
     -DBUILD_CPODES=OFF \
     -DBUILD_FORTRAN_MODULE_INTERFACE=OFF \
     "${SUNDIALS_BUILD_OPTIONS[@]}" \
+    ..
+
+cmake --build . --target install --config Release
+popd
+
+curl -fsSLO https://github.com/jbeder/yaml-cpp/archive/refs/tags/${YAML_CPP_VERSION}.tar.gz
+tar -xzf ${YAML_CPP_VERSION}.tar.gz
+mkdir -p yaml-cpp-${YAML_CPP_VERSION}/build
+pushd yaml-cpp-${YAML_CPP_VERSION}/build
+cmake -G "$GENERATOR" \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_INSTALL_PREFIX="${YAML_CPP_DIR}" \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DCMAKE_INSTALL_LIBDIR:STRING=lib \
+    -DYAML_CPP_FORMAT_SOURCE:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
     ..
 
 cmake --build . --target install --config Release

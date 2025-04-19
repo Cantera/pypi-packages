@@ -1,6 +1,9 @@
 name: Build Python Package
 
 on:
+  pull_request:
+     paths:
+        - ".github/workflows/python-package.yml"
   workflow_dispatch:
     inputs:
       incoming_ref:
@@ -14,32 +17,24 @@ on:
         required: true
         default: "false"
 
+permissions: {}
+
 concurrency:
-  group: ${{ github.ref }}-${{ github.event.inputs.incoming_ref}}
+  group: ${{ github.ref }}-${{ github.event.inputs.incoming_ref || 'main' }}
   cancel-in-progress: true
 
 env:
   ACTION_URL: "https://github.com/Cantera/pypi-packages/actions/runs/${{ github.run_id }}"
 
 jobs:
-  dump:
-    name: Dump the input parameters for the workflow
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Dump Event Payload
-        run: jq . "$GITHUB_EVENT_PATH"
-      - name: Echo the input variables
-        run: |
-          echo "${{ github.event.inputs.incoming_ref }}"
-          echo "${{ github.event.inputs.upload }}"
-
   post-pending-status:
     name: Post a pending workflow status to Cantera/cantera
     runs-on: ubuntu-24.04
     env:
       GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
     outputs:
-      incoming-sha: ${{ steps.get-incoming-sha.outputs.incoming-sha }}
+      incoming-ref: ${{ steps.munge-incoming-ref.outputs.incoming-ref }}
+      incoming-sha: ${{ steps.munge-incoming-ref.outputs.incoming-sha }}
       tag-ref: ${{ steps.munge-incoming-ref.outputs.tag-ref }}
     steps:
       - name: Munge the incoming ref
@@ -47,9 +42,10 @@ jobs:
         run: |
           import os
           import re
+          import subprocess
           from pathlib import Path
 
-          INCOMING_REF = "${{ github.event.inputs.incoming_ref }}"
+          INCOMING_REF = os.environ["INCOMING_REF"]
           INCOMING_SHA = ""
           if INCOMING_REF.startswith("refs/"):
               INCOMING_REF = INCOMING_REF.replace("refs/", "")
@@ -64,28 +60,31 @@ jobs:
           if INCOMING_REF.startswith("tags"):
               TAG_REF = "true"
 
-          Path(os.environ["GITHUB_ENV"]).write_text(
-              f"INCOMING_REF={INCOMING_REF}\n"
-              f"TAG_REF={TAG_REF}\n"
-              f"INCOMING_SHA={INCOMING_SHA}"
-          )
+          if not INCOMING_SHA:
+            output = subprocess.run(
+                ["gh", "api", f"repos/cantera/cantera/git/ref/{INCOMING_REF}",
+                "-H", "Accept: application/vnd.github.v3+json", "--jq", ".object.sha"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if output.returncode == 0:
+                INCOMING_SHA = output.stdout.strip()
+            else:
+                print(f"gh api failed with error code {output.returncode}")
+                print(f"gh api output: {output.stderr}")
+                print(f"gh api stdout: {output.stdout}")
           Path(os.environ["GITHUB_OUTPUT"]).write_text(
+              f"incoming-ref={INCOMING_REF}\n"
+              f"incoming-sha={INCOMING_SHA}\n"
               f"tag-ref={TAG_REF}"
           )
         shell: python
-      - name: Get the SHA associated with the incoming ref
-        id: get-incoming-sha
-        run: |
-          if [[ "${INCOMING_SHA}" == "" ]]; then
-            INCOMING_SHA=$(gh api repos/cantera/cantera/git/ref/${INCOMING_REF} \
-              -H "Accept: application/vnd.github.v3+json" --jq '.object.sha')
-            echo "INCOMING_SHA=${INCOMING_SHA}" >> $GITHUB_ENV
-          fi
-          # This needs to be in this step to be output to other jobs.
-          echo "incoming-sha=${INCOMING_SHA}" >> $GITHUB_OUTPUT
+        env:
+          INCOMING_REF: "${{ inputs.incoming_ref || 'main' }}"
       - name: Post the status to the upstream commit
         id: set-the-status
-        if: env.TAG_REF == 'false'
+        if: steps.munge-incoming-ref.outputs.tag-ref == 'false' && github.event_name != 'pull_request'
         run: |
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
@@ -94,6 +93,8 @@ jobs:
             --field context='PyPI Package Build' \
             --field description="Pending build" \
             --silent
+        env:
+          INCOMING_SHA: "${{ steps.munge-incoming-ref.outputs.incoming-sha }}"
 
   sdist:
     name: Build the sdist
@@ -108,7 +109,8 @@ jobs:
         with:
           repository: "Cantera/cantera"
           submodules: recursive
-          ref: ${{ github.event.inputs.incoming_ref }}
+          ref: ${{ inputs.incoming_ref || 'main'}}
+          persist-credentials: false
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -149,6 +151,8 @@ jobs:
     name: Build ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs: ["sdist", "post-pending-status"]
+    permissions:
+      contents: read
     outputs:
       job-status: ${{ job.status }}
     strategy:
@@ -184,6 +188,8 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Download pre-built sdist
         uses: actions/download-artifact@v4
         with:
@@ -191,20 +197,21 @@ jobs:
       - name: Extract the sdist tarball
         run: tar -xvf *.tar.gz --strip-components=1
         shell: bash
-      - name: Download test files
+      - name: Set test file download destination
         id: download-test-files
-        uses: ./.github/actions/download-cantera-test
-        with:
-          incoming-sha: ${{ needs.post-pending-status.outputs.incoming-sha }}
-
-      # Linux steps
-      - name: Set up CIBW environment
         run: |
-          PYTHON="${{ matrix.python }}"
-          if [[ $PYTHON == "" ]]; then PYTHON="*"; fi
-          CIBW_BUILD="cp${PYTHON//./}-*_${{ matrix.arch }}"
-          echo "CIBW_BUILD=${CIBW_BUILD}" | tee -a $GITHUB_ENV
-        if: runner.os == 'Linux'
+          mkdir -p "${RUNNER_TEMP}/ct-test-dir"
+          echo "test-root=${RUNNER_TEMP}/ct-test-dir" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Download and unpack the tarball
+        run: |
+          curl -fsSL "https://github.com/cantera/cantera/archive/${INCOMING_SHA}.tar.gz" -o cantera.tar.gz
+          tar -xzf cantera.tar.gz --strip-components=1 "cantera-${INCOMING_SHA}/test"
+          rm cantera.tar.gz
+        shell: bash
+        working-directory: "${{ steps.download-test-files.outputs.test-root }}"
+        env:
+          INCOMING_SHA: ${{ needs.post-pending-status.outputs.incoming-sha }}
 
       # Non-Linux steps
       - name: Install boost
@@ -229,7 +236,7 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache/restore@v4
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-0
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
@@ -241,17 +248,24 @@ jobs:
         # cibuildwheel says. CANTERA_TEST_DIR doesn't need the replacement because
         # it will be substituted in a cmd or pwsh session.
         run: |
-          $BOOST_ROOT = "${{ steps.install-boost.outputs.BOOST_ROOT }}" -replace "\\", "/"
+          $BOOST_ROOT = "$Env:BOOST_ROOT" -replace "\\", "/"
           echo "Boost_ROOT=$BOOST_ROOT" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-          echo "CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-          echo "CIBW_BUILD=cp*-*" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: runner.os == 'Windows'
+        env:
+          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       # macOS-only steps
       - name: Build required libraries
         run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
         if: runner.os == 'macOS'
+
+      - name: Set up CIBW environment
+        run: |
+          echo "Boost_ROOT=$BOOST_ROOT" >> $GITHUB_ENV
+        if: runner.os == 'macOS'
+        env:
+          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       - name: Save the cache
         uses: actions/cache/save@v4
@@ -260,20 +274,15 @@ jobs:
           path: ${{ github.workspace }}/cache
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
-      - name: Set up CIBW environment
-        run: |
-          echo "Boost_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }}" >> $GITHUB_ENV
-          echo "CANTERA_TEST_DIR=${{ steps.download-test-files.outputs.test-root }}" >> $GITHUB_ENV
-          echo "CIBW_BUILD=cp*-*" >> $GITHUB_ENV
-        if: runner.os == 'macOS'
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.1
+        uses: pypa/cibuildwheel@v2.23.2
         env:
-          CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host/${{ steps.download-test-files.outputs.test-root }}
+          CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
+          CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 CMAKE_BUILD_PARALLEL_LEVEL=4
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path %HDF5_LIB_DIR%;%SUNDIALS_LIB_DIR%;%YAML_CPP_LIB_DIR% -w {dest_dir} {wheel}
           CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
-          CIBW_BUILD: ${{ env.CIBW_BUILD }}
+          CIBW_BUILD: "cp*-*"
           CIBW_ARCHS: ${{ matrix.arch }}
       - name: Archive the built wheels
         uses: actions/upload-artifact@v4
@@ -286,12 +295,13 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       job-status: ${{ job.status }}
+    permissions:
+      attestations: write
+      id-token: write
     needs:
       - "sdist"
       - "build-wheels"
-    if: github.event.inputs.upload == 'true'
-    permissions:
-      id-token: write
+    if: inputs.upload == 'true'
     environment: pypi
     steps:
       - name: Download pre-built wheels
@@ -311,19 +321,19 @@ jobs:
       - "sdist"
       - "build-wheels"
       - "publish-files-to-pypi"
-    if: always()
+    if: always() && github.event_name != 'pull_request'
     steps:
       - name: Collect statuses
-        run: |
-          from collections import Counter
+        run: | # zizmor: ignore[template-injection]
           import os
+          from collections import Counter
           statuses = {
-              "sdist": "${{needs.sdist.outputs.job-status}}",
-              "wheels": "${{needs.build-wheels.outputs.job-status}}",
-              "publish": "${{needs.publish-files-to-pypi.outputs.job-status}}",
+              "sdist": "${{ needs.sdist.outputs.job-status }}",
+              "wheels": "${{ needs.build-wheels.outputs.job-status }}",
+              "publish": "${{ needs.publish-files-to-pypi.outputs.job-status }}",
           }
           # This is a deliberate comparison to the empty string.
-          if statuses["publish"] == "" and "${{ github.event.inputs.upload }}" == "false":
+          if statuses["publish"] == "" and os.environ["UPLOAD"] == "false":
               publish = statuses.pop("publish")
           else:
               publish = ""
@@ -353,10 +363,11 @@ jobs:
           with open(os.environ["GITHUB_ENV"], "a") as gh_env:
               gh_env.write(f"OVERALL_STATUS={overall_status}\nDESCRIPTION={description}")
         shell: python
+        env:
+          UPLOAD: "${{ inputs.upload }}"
       - name: Post the status to the upstream commit
         if: needs.post-pending-status.outputs.tag-ref == 'false'
         run: |
-          INCOMING_SHA=${{ needs.post-pending-status.outputs.incoming-sha }}
           gh api repos/cantera/cantera/statuses/${INCOMING_SHA} \
             -H "Accept: application/vnd.github.v3+json" \
             --field state="${OVERALL_STATUS}" \
@@ -366,3 +377,4 @@ jobs:
             --silent
         env:
           GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
+          INCOMING_SHA: "${{ needs.post-pending-status.outputs.incoming-sha }}"
