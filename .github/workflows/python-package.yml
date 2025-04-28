@@ -275,7 +275,7 @@ jobs:
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@v2.23.3
         env:
           CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
