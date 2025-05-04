@@ -31,7 +31,11 @@ jobs:
     name: Post a pending workflow status to Cantera/cantera
     runs-on: ubuntu-24.04
     env:
-      GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS }}
+      # The second part of this expression is a fallback in case the first part is
+      # not set. Dependabot doesn't have the CANTERA_REPO_STATUS secret set, so it
+      # will use the GITHUB_TOKEN provided by GitHub Actions. This is fine because
+      # the status is not posted upstream for pull requests.
+      GITHUB_TOKEN: ${{ secrets.CANTERA_REPO_STATUS || github.token}}
     outputs:
       incoming-ref: ${{ steps.munge-incoming-ref.outputs.incoming-ref }}
       incoming-sha: ${{ steps.munge-incoming-ref.outputs.incoming-sha }}
