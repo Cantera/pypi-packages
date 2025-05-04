@@ -221,7 +221,7 @@ jobs:
       - name: Install boost
         # Our custom manylinux images already have Boost installed
         if: runner.os != 'Linux'
-        uses: MarkusJx/install-boost@v2.5.0
+        uses: MarkusJx/install-boost@b1f0ee8b87cf60236b72440c72d0085d002770c5 #v2.5.0
         id: install-boost
         with:
             # REQUIRED: Specify the required boost version
@@ -279,7 +279,7 @@ jobs:
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a # v2.23.3
         env:
           CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
@@ -315,7 +315,7 @@ jobs:
           pattern: cibw-*
           merge-multiple: true
       - name: pypi-publish
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
