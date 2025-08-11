@@ -192,7 +192,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: cibw-sdist
       - name: Extract the sdist tarball
@@ -306,7 +306,7 @@ jobs:
     environment: pypi
     steps:
       - name: Download pre-built wheels
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: dist
           pattern: cibw-*
