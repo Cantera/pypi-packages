@@ -29,10 +29,10 @@ cmake -G "$GENERATOR" \
 cmake --build . --target install --config Release
 popd
 
-curl -fsSLO https://github.com/BlueBrain/HighFive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
+curl -fsSLO https://github.com/highfive-devs/highfive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
 tar -xzf v${HIGHFIVE_VERSION}.tar.gz
-mkdir -p HighFive-${HIGHFIVE_VERSION}/build
-pushd HighFive-${HIGHFIVE_VERSION}/build
+mkdir -p highfive-v${HIGHFIVE_VERSION}/build
+pushd highfive-v${HIGHFIVE_VERSION}/build
 
 cmake -G "$GENERATOR" \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
