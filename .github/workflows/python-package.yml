@@ -215,8 +215,13 @@ jobs:
           INCOMING_SHA: ${{ needs.post-pending-status.outputs.incoming-sha }}
 
       # Non-Linux steps
+      # Our custom manylinux images already have uv installed
+      - name: Install uv
+        if: runner.os != 'Linux'
+        uses: astral-sh/setup-uv@b75a909f75acd358c2196fb9a5f1299a9a8868a4 # v6.7.0
+
+      # Our custom manylinux images already have Boost installed
       - name: Install boost
-        # Our custom manylinux images already have Boost installed
         if: runner.os != 'Linux'
         uses: MarkusJx/install-boost@b1f0ee8b87cf60236b72440c72d0085d002770c5 # v2.5.0
         id: install-boost
@@ -225,15 +230,15 @@ jobs:
           # A list of supported versions can be found here:
           # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
           boost_version: ${{ matrix.boost-version }}
-          # OPTIONAL: Specify a custon install location
+          # OPTIONAL: Specify a custom install location
           boost_install_dir: ${{ runner.temp }}
           toolset: ${{ matrix.boost-toolset }}
           platform_version: ${{ matrix.boost-platform-version }}
           arch: ${{ matrix.boost-arch }}
 
+      # Our custom manylinux images already have all our dependencies installed
       - name: Restore the cached built libraries
         id: restore-built-libraries
-        # Our custom manylinux images already have all our dependencies installed
         if: runner.os != 'Linux'
         uses: actions/cache/restore@v4
         with:
