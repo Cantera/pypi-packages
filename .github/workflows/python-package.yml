@@ -223,7 +223,7 @@ jobs:
       # Our custom manylinux images already have Boost installed
       - name: Install boost
         if: runner.os != 'Linux'
-        uses: MarkusJx/install-boost@b1f0ee8b87cf60236b72440c72d0085d002770c5 # v2.5.0
+        uses: MarkusJx/install-boost@8ba8b2fac59ef3d91a838bb4aa53ceabd33d1aa3 # v2.5.1
         id: install-boost
         with:
           # REQUIRED: Specify the required boost version
