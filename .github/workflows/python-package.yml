@@ -124,7 +124,7 @@ jobs:
         run: |
           python3 `which scons` sdist
       - name: Archive the built sdist
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: ./build/python_sdist/dist/*.tar.gz
           name: cibw-sdist
@@ -192,7 +192,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: cibw-sdist
       - name: Extract the sdist tarball
@@ -218,7 +218,7 @@ jobs:
       # Our custom manylinux images already have uv installed
       - name: Install uv
         if: runner.os != 'Linux'
-        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
 
       # Our custom manylinux images already have Boost installed
       - name: Install boost
@@ -240,7 +240,7 @@ jobs:
       - name: Restore the cached built libraries
         id: restore-built-libraries
         if: runner.os != 'Linux'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
           path: ${{ github.workspace }}/cache
@@ -274,7 +274,7 @@ jobs:
           BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       - name: Save the cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         if: always() && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/cache
@@ -289,7 +289,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path %HDF5_LIB_DIR%;%SUNDIALS_LIB_DIR%;%YAML_CPP_LIB_DIR% -w {dest_dir} {wheel}
           CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
       - name: Archive the built wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           path: ./wheelhouse/*.whl
           name: cibw-wheels-${{ runner.os }}-${{ strategy.job-index }}
@@ -309,7 +309,7 @@ jobs:
     environment: pypi
     steps:
       - name: Download pre-built wheels
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: dist
           pattern: cibw-*
