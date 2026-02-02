@@ -66,15 +66,7 @@ SUNDIALS_BUILD_OPTIONS=(
 )
 YAML_CPP_DIR="${PROJECT_PATH}/cache/yaml-cpp/${YAML_CPP_VERSION}-${ARCH}"
 
-# When compiling HDF5, we should use the minimum across all Python versions for a given
-# arch, for versions see for example a more updated version of the following:
-# https://github.com/pypa/cibuildwheel/blob/9c75ea15c2f31a77e6043b80b1b7081372319d85/cibuildwheel/macos.py#L302-L315
-if [[ "${ARCH}" == "arm64" ]]; then
-    export MACOSX_DEPLOYMENT_TARGET="11.0"
-else
-    # This is the minimum version for Cantera
-    export MACOSX_DEPLOYMENT_TARGET="10.15"
-fi
+export MACOSX_DEPLOYMENT_TARGET=11.0
 
 lib_name=libhdf5.dylib
 inc_name=highfive.hpp

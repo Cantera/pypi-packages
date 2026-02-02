@@ -169,21 +169,13 @@ jobs:
             boost-toolset: msvc
             boost-platform-version: 2025
             boost-version: "1.88.0"
-          - os: macos-14
+          - os: macos-15
             arch: arm64
             boost-arch: aarch64
             boost-toolset: clang
             # Since we only use the headers, we can use the platform version for this
             # macos version
-            boost-platform-version: "14"
-            boost-version: "1.88.0"
-          - os: macos-13
-            arch: x86_64
-            boost-arch: x86
-            boost-toolset: clang
-            # Since we only use the headers, we can use the platform version for this
-            # macos version
-            boost-platform-version: "13"
+            boost-platform-version: "15"
             boost-version: "1.88.0"
       fail-fast: false
     steps:
@@ -242,7 +234,7 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-2
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
