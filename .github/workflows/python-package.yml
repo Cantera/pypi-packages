@@ -105,15 +105,15 @@ jobs:
     outputs:
       job-status: ${{ job.status }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         name: Checkout the repository
         with:
           repository: "Cantera/cantera"
           submodules: recursive
-          ref: ${{ inputs.incoming_ref || 'main'}}
+          ref: ${{ inputs.incoming_ref || 'main' }}
           persist-credentials: false
       - name: Set Up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -124,7 +124,7 @@ jobs:
         run: |
           python3 `which scons` sdist
       - name: Archive the built sdist
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           path: ./build/python_sdist/dist/*.tar.gz
           name: cibw-sdist
@@ -188,11 +188,11 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Download pre-built sdist
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: cibw-sdist
       - name: Extract the sdist tarball
@@ -240,7 +240,7 @@ jobs:
       - name: Restore the cached built libraries
         id: restore-built-libraries
         if: runner.os != 'Linux'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-1
           path: ${{ github.workspace }}/cache
@@ -274,7 +274,7 @@ jobs:
           BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       - name: Save the cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         if: always() && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/cache
@@ -289,7 +289,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path %HDF5_LIB_DIR%;%SUNDIALS_LIB_DIR%;%YAML_CPP_LIB_DIR% -w {dest_dir} {wheel}
           CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
       - name: Archive the built wheels
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           path: ./wheelhouse/*.whl
           name: cibw-wheels-${{ runner.os }}-${{ strategy.job-index }}
@@ -309,7 +309,7 @@ jobs:
     environment: pypi
     steps:
       - name: Download pre-built wheels
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: dist
           pattern: cibw-*
