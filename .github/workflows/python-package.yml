@@ -105,7 +105,7 @@ jobs:
     outputs:
       job-status: ${{ job.status }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         name: Checkout the repository
         with:
           repository: "Cantera/cantera"
@@ -113,7 +113,7 @@ jobs:
           ref: ${{ inputs.incoming_ref || 'main' }}
           persist-credentials: false
       - name: Set Up Python 3.12
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: "pip"
@@ -180,7 +180,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Download pre-built sdist
@@ -210,7 +210,7 @@ jobs:
       # Our custom manylinux images already have uv installed
       - name: Install uv
         if: runner.os != 'Linux'
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
       # Our custom manylinux images already have Boost installed
       - name: Install boost
@@ -232,7 +232,7 @@ jobs:
       - name: Restore the cached built libraries
         id: restore-built-libraries
         if: runner.os != 'Linux'
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-2
           path: ${{ github.workspace }}/cache
@@ -266,14 +266,14 @@ jobs:
           BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
       - name: Save the cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: always() && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/cache
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
         env:
           CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
@@ -307,7 +307,7 @@ jobs:
           pattern: cibw-*
           merge-multiple: true
       - name: pypi-publish
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
 
   send_status_to_cantera:
     name: Send jobs status to Cantera/cantera
