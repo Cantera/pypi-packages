@@ -112,17 +112,13 @@ jobs:
           submodules: recursive
           ref: ${{ inputs.incoming_ref || 'main' }}
           persist-credentials: false
-      - name: Set Up Python 3.12
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
         with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: interfaces/python_sdist/pyproject.toml.in
-      - name: Install dependencies
-        run: python3 -m pip install scons build
-      - name: Build the sdist
+          environments: "wheel"
+      - name: Build sdist
         run: |
-          python3 `which scons` sdist
+          pixi run -e wheel sdist
       - name: Archive the built sdist
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -234,7 +230,7 @@ jobs:
         if: runner.os != 'Linux'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-2
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}
           path: ${{ github.workspace }}/cache
 
       # Windows-only steps
@@ -278,7 +274,6 @@ jobs:
           CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 CMAKE_BUILD_PARALLEL_LEVEL=4
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path %HDF5_LIB_DIR%;%SUNDIALS_LIB_DIR%;%YAML_CPP_LIB_DIR% -w {dest_dir} {wheel}
           CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
       - name: Archive the built wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
