@@ -115,8 +115,29 @@ function fmt() {
     cmake -G "$GENERATOR" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="${FMT_DIR}" \
+        -DCMAKE_INSTALL_LIBDIR=lib \
         -DFMT_DOC:BOOL=OFF \
         -DFMT_TEST:BOOL=OFF \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        ..
+
+    cmake --build . --target install --config Release
+    popd || exit
+}
+
+function eigen() {
+    local tar_file="eigen-${EIGEN_VERSION}.tar.bz2"
+    curl -fsSLO "https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/${tar_file}"
+    mkdir -p "eigen-${EIGEN_VERSION}/build"
+    tar -xzf "$tar_file" --strip-components="$(strip_components "$tar_file")" -C "eigen-${EIGEN_VERION}"
+    pushd "eigen-${EIGEN_VERSION}" || exit
+
+    cmake -G "$GENERATOR" \
+        -DCMAKE_BUILD_TYPE:STRING=Release \
+        -DCMAKE_INSTALL_PREFIX="${EIGEN_DIR}" \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DEIGEN_BUILD_DOC:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF \
         ..
 
     cmake --build . --target install --config Release
