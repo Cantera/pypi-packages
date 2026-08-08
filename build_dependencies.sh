@@ -105,10 +105,29 @@ function yaml_cpp() {
     popd || exit
 }
 
+function fmt() {
+    local tar_file="fmt-${FMT_VERSION}.zip"
+    curl -fsSLO "https://github.com/fmtlib/fmt/releases/download/${FMT_VERSION}/${tar_file}"
+    mkdir -p "fmt-${FMT_VERSION}/build"
+    unzip "$tar_file"
+    pushd "fmt-${FMT_VERSION}/build" || exit
+
+    cmake -G "$GENERATOR" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX="${FMT_DIR}" \
+        -DFMT_DOC:BOOL=OFF \
+        -DFMT_TEST:BOOL=OFF \
+        ..
+
+    cmake --build . --target install --config Release
+    popd || exit
+}
+
 function main() {
     pushd "${RUNNER_TEMP}" || exit
     hdf5
     highfive
     sundials
     yaml_cpp
+    fmt
 }
