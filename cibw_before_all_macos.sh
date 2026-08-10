@@ -35,12 +35,14 @@ set -eo pipefail
 set +x
 
 function setup_github_env {
-    echo "HDF5_ROOT=${HDF5_DIR}" | tee -a $GITHUB_ENV
-    echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a $GITHUB_ENV
-    echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a $GITHUB_ENV
-    echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a $GITHUB_ENV
-    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${YAML_CPP_DIR}/lib" | tee -a $GITHUB_ENV
-    echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a $GITHUB_ENV
+    echo "HDF5_ROOT=${HDF5_DIR}" | tee -a "$GITHUB_ENV"
+    echo "HighFive_ROOT=${HIGHFIVE_DIR}" | tee -a "$GITHUB_ENV"
+    echo "SUNDIALS_ROOT=${SUNDIALS_DIR}" | tee -a "$GITHUB_ENV"
+    echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a "$GITHUB_ENV"
+    echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${YAML_CPP_DIR}/lib" | tee -a "$GITHUB_ENV"
+    echo "YAML_CPP_ROOT=${YAML_CPP_DIR}" | tee -a "$GITHUB_ENV"
+    echo "Eigen3_ROOT=${EIGEN_DIR}" | tee -a "$GITHUB_ENV"
+    echo "FMT_ROOT=${FMT_DIR}" | tee -a "$GITHUB_ENV"
 }
 
 if [[ "$1" == "" ]] ; then
@@ -65,13 +67,15 @@ SUNDIALS_BUILD_OPTIONS=(
     "-DSUNDIALS_LAPACK_UNDERSCORES=NONE"
 )
 YAML_CPP_DIR="${PROJECT_PATH}/cache/yaml-cpp/${YAML_CPP_VERSION}-${ARCH}"
+EIGEN_DIR="${PROJECT_PATH}/cache/eigen/${EIGEN_VERSION}-${ARCH}"
+FMT_DIR="${PROJECT_PATH}/cache/fmt/${FMT_VERSION}-${ARCH}"
 
 export MACOSX_DEPLOYMENT_TARGET=11.0
 
 lib_name=libhdf5.dylib
 inc_name=highfive.hpp
 
-if [ -f ${HDF5_DIR}/lib/${lib_name} ] && [ -f ${HIGHFIVE_DIR}/include/highfive/${inc_name} ]; then
+if [ -f "${HDF5_DIR}/lib/${lib_name}" ] && [ -f "${HIGHFIVE_DIR}/include/highfive/${inc_name}" ]; then
     echo "using cached build"
     setup_github_env
     exit 0
