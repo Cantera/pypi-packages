@@ -135,8 +135,9 @@ function eigen() {
     cmake -G "$GENERATOR" \
         -DCMAKE_BUILD_TYPE:STRING=Release \
         -DCMAKE_INSTALL_PREFIX="${EIGEN_DIR}" \
-        -DCMAKE_INSTALL_LIBDIR=lib \
         -DEIGEN_BUILD_DOC:BOOL=OFF \
+        -DEIGEN_BUILD_DEMOS:BOOL=OFF \
+        -DEIGEN_BUILD_CMAKE_PACKAGE:BOOL=ON \
         -DBUILD_TESTING:BOOL=OFF \
         ..
 

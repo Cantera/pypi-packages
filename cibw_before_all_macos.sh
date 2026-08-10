@@ -41,8 +41,8 @@ function setup_github_env {
     echo "MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET}" | tee -a "$GITHUB_ENV"
     echo "DYLD_FALLBACK_LIBRARY_PATH=${HDF5_DIR}/lib:${YAML_CPP_DIR}/lib" | tee -a "$GITHUB_ENV"
     echo "yaml-cpp_ROOT=${YAML_CPP_DIR}" | tee -a "$GITHUB_ENV"
-    echo "eigen_ROOT=${EIGEN_DIR}" | tee -a "$GITHUB_ENV"
-    echo "fmt_ROOT=${FMT_DIR}" | tee -a "$GITHUB_ENV"
+    echo "Eigen3_ROOT=${EIGEN_DIR}" | tee -a "$GITHUB_ENV"
+    echo "FMT_ROOT=${FMT_DIR}" | tee -a "$GITHUB_ENV"
 }
 
 if [[ "$1" == "" ]] ; then
