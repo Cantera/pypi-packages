@@ -2,7 +2,8 @@
 
 function strip_components() {
     local tar_file=$1
-    if tar tf "${tar_file}" | head -n 1 | grep -q '^./$'; then STRIP_COMPONENTS_COUNT=2; else STRIP_COMPONENTS_COUNT=1; fi;
+    tar tf "${tar_file}" | head -n 1
+    if tar tf "${tar_file}" | head -n 1 | grep -q '^\./'; then STRIP_COMPONENTS_COUNT=2; else STRIP_COMPONENTS_COUNT=1; fi;
     printf '%s\n' $STRIP_COMPONENTS_COUNT;
 }
 
