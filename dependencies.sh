@@ -1,8 +1,0 @@
-export HDF5_VERSION="1.14.6"
-export LIBAEC_VERSION="1.1.4"
-export ZLIB_VERSION="1.3.1"
-export HIGHFIVE_VERSION="3.3.0"
-export SUNDIALS_VERSION="7.8.0"
-export YAML_CPP_VERSION="0.9.0"
-export FMT_VERSION="12.2.0"
-export EIGEN_VERSION="5.0.1"

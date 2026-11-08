@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/python-package.yml"
+      - "build_dependencies.py"
+      - "dependencies.toml"
   workflow_dispatch:
     inputs:
       incoming_ref:
@@ -155,13 +157,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-24.04
-            arch: wasm32
-            cibw-platform: pyodide
-            boost-arch: x86
-            boost-version: "1.88.0"
-            boost-platform-version: "24.04"
-            boost-toolset: "gcc"
+          # Disabled because these probably can't be uploaded to PyPI yet and the setting
+          # for turning off CMake modules doesn't work here for some reason. See
+          # https://github.com/Cantera/pypi-packages/issues/41
+          # - os: ubuntu-24.04
+          #   arch: wasm32
+          #   cibw-platform: pyodide
+          #   boost-arch: x86
+          #   boost-version: "1.88.0"
+          #   boost-platform-version: "24.04"
+          #   boost-toolset: "gcc"
           - os: ubuntu-24.04-arm
             arch: aarch64
           - os: ubuntu-24.04
@@ -227,19 +232,29 @@ jobs:
           platform_version: ${{ matrix.boost-platform-version }}
           arch: ${{ matrix.boost-arch }}
 
+      - name: Install uv for dependency builds
+        if: runner.os != 'Linux'
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
       # Our custom manylinux images already have all our dependencies installed
       - name: Restore the cached built libraries
         id: restore-built-libraries
-        if: runner.os != 'Linux'
+        # Only use the cache if we're not building for upload. This helps prevent cache
+        # poisioning
+        if: runner.os != 'Linux' && inputs.upload != true
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('dependencies.sh') }}-bust
+          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('build_dependencies.py', 'dependencies.toml') }}-python-v1
           path: ${{ github.workspace }}/cache
 
-      # Windows-only steps
       - name: Build required libraries
-        run: bash ./cibw_before_all_windows.sh "${{ github.workspace }}"
-        if: runner.os == 'Windows'
+        run: uv run build_dependencies.py "$PROJECT_PATH"
+        shell: bash
+        if: runner.os != 'Linux'
+        env:
+          PROJECT_PATH: ${{ github.workspace }}
+
+      # Windows-only steps
       - name: Set up CIBW environment
         # On Windows, Boost_ROOT needs to have \ replaced by / because that's what
         # cibuildwheel says. CANTERA_TEST_DIR doesn't need the replacement because
@@ -252,11 +267,6 @@ jobs:
         env:
           BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
-      # macos-only steps
-      - name: Build required libraries
-        run: bash ./cibw_before_all_macos.sh "${{ github.workspace }}"
-        if: runner.os == 'macOS'
-
       # macos and pyodide steps
       - name: Set up CIBW environment
         run: |
@@ -267,22 +277,28 @@ jobs:
 
       - name: Save the cache
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        if: always() && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
+        if: always() && inputs.upload != true && runner.os != 'Linux' && steps.restore-built-libraries.outputs.cache-hit != 'true'
         with:
           path: ${{ github.workspace }}/cache
           key: ${{ steps.restore-built-libraries.outputs.cache-primary-key }}
+
+      - name: Use cibw cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: inputs.upload != true
+        with:
+          path: ${{ runner.temp }}/cibw-cache
+          key: cibw-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            cibw-${{ runner.os }}-
 
       - name: Build wheels
         uses: pypa/cibuildwheel@b9e566a2b284570af229f6c2a33673410d0389a3 # v4.3.4
         env:
           CANTERA_TEST_DIR: ${{ steps.download-test-files.outputs.test-root }}
-          CMAKE_ARGS: "-DCMAKE_CXX_SCAN_FOR_MODULES=OFF"
           CIBW_ENVIRONMENT_LINUX: CT_SKIP_SLOW=1 CANTERA_TEST_DIR=/host${{ steps.download-test-files.outputs.test-root }}
           CIBW_ENVIRONMENT_WINDOWS: CT_SKIP_SLOW=1 CMAKE_BUILD_PARALLEL_LEVEL=4
-          CIBW_ENVIRONMNET_MACOS: CT_SKIP_SLOW=1
+          CIBW_ENVIRONMENT_MACOS: CT_SKIP_SLOW=1
           CIBW_PLATFORM: ${{ matrix.cibw-platform || 'auto' }}
-        with:
-          extras: "uv"
       - name: Archive the built wheels
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
